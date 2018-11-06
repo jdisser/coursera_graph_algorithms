@@ -1,29 +1,56 @@
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Scanner;
 
 public class ConnectedComponents {
-    private static int numberOfComponents(ArrayList<Integer>[] adj) {
-        int result = 0;
-        //write your code here
-        return result;
+	
+	static int[] visited;
+	static ArrayList<ArrayList<Integer>> adj;
+	
+	private static void explore(int x, int c) {
+		visited[x] = c;
+		for(int vx : adj.get(x)) {
+			if(visited[vx] != c)
+				explore(vx, c);
+		}
+		
+	}
+	
+    private static int numberOfComponents() {
+//        int result = 0;
+        
+    	visited = new int[adj.size()];
+    	Arrays.fill(visited, 0);
+    	
+    	int cc = 0;
+    	int i = 0;
+        while( i < adj.size()) {
+        	if(visited[i] == 0) {
+           		++cc;
+        		explore(i, cc);
+        	}
+        	++i;
+        }
+        return cc;
     }
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
         int n = scanner.nextInt();
         int m = scanner.nextInt();
-        ArrayList<Integer>[] adj = (ArrayList<Integer>[])new ArrayList[n];
+        adj = new ArrayList<ArrayList<Integer>>();
         for (int i = 0; i < n; i++) {
-            adj[i] = new ArrayList<Integer>();
+        	adj.add(new ArrayList<Integer>());
         }
         for (int i = 0; i < m; i++) {
             int x, y;
             x = scanner.nextInt();
             y = scanner.nextInt();
-            adj[x - 1].add(y - 1);
-            adj[y - 1].add(x - 1);
+            adj.get(x - 1).add(y - 1);
+            adj.get(y - 1).add(x - 1);
         }
-        System.out.println(numberOfComponents(adj));
+        System.out.println(numberOfComponents());
+        scanner.close();
     }
 }
 
