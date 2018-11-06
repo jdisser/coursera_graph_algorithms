@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Scanner;
 
 public class Reachability {
@@ -18,6 +19,7 @@ public class Reachability {
     private static int reach(int x, int y) {
     	
     	visited = new boolean[adj.size()];
+    	Arrays.fill(visited, false);
     	explore(x);
     	if(visited[y])
     		return 1;
@@ -31,14 +33,14 @@ public class Reachability {
         int n = scanner.nextInt();
         int m = scanner.nextInt();
         adj = new ArrayList<ArrayList<Integer>>();
-//        for (int i = 0; i < n; i++) {
-//            adj.get(i) = new ArrayList<Integer>();
-//        }
+        for (int i = 0; i < n; i++) {
+            adj.add(new ArrayList<Integer>());
+        }
         for (int i = 0; i < m; i++) {
             int x, y;
             x = scanner.nextInt();
             y = scanner.nextInt();
-            adj.get(x -1).add(y - 1);
+            adj.get(x - 1).add(y - 1);
             adj.get(y - 1).add(x - 1);
         }
         
