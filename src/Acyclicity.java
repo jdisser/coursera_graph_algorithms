@@ -1,13 +1,14 @@
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Scanner;
 
 public class Acyclicity {
 	
 	static int n = 0;
 	static int m = 0;
-	static int[] pre = new int[n];
-	static int[] post = new int[n];
-	static int clock = 0;
+	static int[] pre;
+	static int[] post;
+	static int clock = 1;
 	static ArrayList<ArrayList<Integer>> adj = null;
 	
     private static int acyclic(ArrayList<ArrayList<Integer>> adj) {
@@ -19,6 +20,7 @@ public class Acyclicity {
     	
     	for(ArrayList<Integer> al : adj) {
     		el = adj.indexOf(al);
+//    		System.out.println("el: " + el);
     		elPost = post[el];
     		for(int v : al) {
     			if(post[v] > elPost)
@@ -30,14 +32,25 @@ public class Acyclicity {
     }
     
     private static void explore(int x) {
+    	
+    	if (pre[x] != 0)
+    		return;
+    	
 		pre[x] = clock;
 		++clock;
-		for(int vx : adj.get(x)) {
-			if(pre[vx] != 0)
+		
+		ArrayList<Integer> al = adj.get(x);
+		
+		System.out.println("explore v->al: " + Arrays.toString(al.toArray()));
+		
+		for(int vx : al) {
+			System.out.println("vx: " + vx + " pre[vx]: " + pre[vx]);
+			if(pre[vx] == 0)
 				explore(vx);
 		}
 		post[x] = clock;
-		++clock;	
+		++clock;
+		System.out.println("x: " + x + " pre: " + pre[x] + " post: " + post[x]);
 	}
     
     
@@ -57,18 +70,25 @@ public class Acyclicity {
     public static void main(String[] args) {
 
     	Scanner scanner = new Scanner(System.in);
-        int n = scanner.nextInt();
-        int m = scanner.nextInt();
+        n = scanner.nextInt();
+        m = scanner.nextInt();
+        pre = new int[n];
+        post = new int[n];
         adj = new ArrayList<ArrayList<Integer>>();
         for (int i = 0; i < n; i++) {
+        	System.out.println("Added v: " + i);
             adj.add(new ArrayList<Integer>());
         }
         for (int i = 0; i < m; i++) {
             int x, y;
             x = scanner.nextInt();
             y = scanner.nextInt();
-            adj.get(x - 1).add(y - 1);
+            adj.get(x - 1).add(y - 1);	//shift all indexes to 0 based
 
+        }
+        
+        for(ArrayList<Integer> al : adj) {
+        	System.out.println("v: " + adj.indexOf(al) + " " + Arrays.toString(al.toArray()));
         }
         
         System.out.println(acyclic(adj));
