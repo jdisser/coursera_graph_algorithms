@@ -11,6 +11,7 @@ public class Toposort {
 	static int[] post;
 	static int[] order;
 	static int[] postIndex;
+	static boolean[] linked;
 	static int clock = 1;
 	static ArrayList<ArrayList<Integer>> adj = null;
 	private static Random random = new Random();
@@ -35,7 +36,7 @@ public class Toposort {
 
 	 private static void explore(int x) {
 	    	
-	    	if (pre[x] != 0)
+	    	if (pre[x] > 0)					//allow 2nd visit for singleton vertexes with negative pre values
 	    		return;
 	    	
 			pre[x] = clock;
@@ -43,16 +44,23 @@ public class Toposort {
 			
 			ArrayList<Integer> al = adj.get(x);
 			
-	//		System.out.println("explore v->al: " + Arrays.toString(al.toArray()));
+			if(!al.isEmpty())
+				linked[x] = true;
+			
+			if(al.isEmpty() && linked[x] == false)	//if this vertex is linked don't allow more visits
+					pre[x] *= -1;					//This vertex might be connected and included in a 2nd visit
+			
+//			System.out.println("explore x: " + x + " v->al: " + Arrays.toString(al.toArray()));
 			
 			for(int vx : al) {
-	//			System.out.println("vx: " + vx + " pre[vx]: " + pre[vx]);
-				if(pre[vx] == 0)
+				linked[vx] = true;
+//				System.out.println("vx: " + vx + " pre[vx]: " + pre[vx]);
+				if(pre[vx] <= 0)
 					explore(vx);
 			}
-			post[x] = clock;
+			post[x] = clock;				//the pre and post number are overwritten on the 2nd visit
 			++clock;
-	//		System.out.println("x: " + x + " pre: " + pre[x] + " post: " + post[x]);
+//			System.out.println("x: " + x + " pre: " + pre[x] + " post: " + post[x]);
 		}
 	 
 	 private static void dfs() {
@@ -123,6 +131,8 @@ public class Toposort {
         pre = new int[n];
         post = new int[n];
         postIndex = new int[n];
+        linked = new boolean[n];
+        Arrays.fill(linked, false);
         adj = new ArrayList<ArrayList<Integer>>();
         for (int i = 0; i < n; i++) {
 //        	System.out.println("Added v: " + i);
