@@ -41,16 +41,16 @@ public class Acyclicity {
 		
 		ArrayList<Integer> al = adj.get(x);
 		
-		System.out.println("explore v->al: " + Arrays.toString(al.toArray()));
+//		System.out.println("explore v->al: " + Arrays.toString(al.toArray()));
 		
 		for(int vx : al) {
-			System.out.println("vx: " + vx + " pre[vx]: " + pre[vx]);
+//			System.out.println("vx: " + vx + " pre[vx]: " + pre[vx]);
 			if(pre[vx] == 0)
 				explore(vx);
 		}
 		post[x] = clock;
 		++clock;
-		System.out.println("x: " + x + " pre: " + pre[x] + " post: " + post[x]);
+//		System.out.println("x: " + x + " pre: " + pre[x] + " post: " + post[x]);
 	}
     
     
@@ -76,7 +76,7 @@ public class Acyclicity {
         post = new int[n];
         adj = new ArrayList<ArrayList<Integer>>();
         for (int i = 0; i < n; i++) {
-        	System.out.println("Added v: " + i);
+//        	System.out.println("Added v: " + i);
             adj.add(new ArrayList<Integer>());
         }
         for (int i = 0; i < m; i++) {
@@ -88,7 +88,7 @@ public class Acyclicity {
         }
         
         for(ArrayList<Integer> al : adj) {
-        	System.out.println("v: " + adj.indexOf(al) + " " + Arrays.toString(al.toArray()));
+//        	System.out.println("v: " + adj.indexOf(al) + " " + Arrays.toString(al.toArray()));
         }
         
         System.out.println(acyclic(adj));
