@@ -70,7 +70,7 @@ class Graph {
 	
 	public void exploreConnected(int x, int ci) {
     	
-		System.out.println("exploreConnected x: " + x + " ci: " + ci + " connected[x]: " + connected[x]);
+//		System.out.println("exploreConnected x: " + x + " ci: " + ci + " connected[x]: " + connected[x]);
 		
     	if (connected[x] != 0)					
     		return;
@@ -105,14 +105,14 @@ class Graph {
 	
 	public void ccs() {
 		
-		System.out.println("Initial in ccs cc: " + cc + " connected[]: " + Arrays.toString(connected));
+//		System.out.println("Initial in ccs cc: " + cc + " connected[]: " + Arrays.toString(connected));
 		
 		
 		for (int i = 0; i < n; ++i) {
 			if(connected[orderIndex[i]] == 0) {
 				++cc;
 				exploreConnected(orderIndex[i], cc);
-				System.out.println("cc: " + cc + " connected[]: " + Arrays.toString(connected));
+//				System.out.println("cc: " + cc + " connected[]: " + Arrays.toString(connected));
 				
 			}
 		}
@@ -183,16 +183,16 @@ public class StronglyConnected {
     	gr.dfs();
         gr.toposort();
         
-        for(int i = 0; i < g.n; ++i) {
-        	System.out.println("v: " + i + " " + Arrays.toString(g.graph.get(i).toArray()));
-        }
+//        for(int i = 0; i < g.n; ++i) {
+//        	System.out.println("v: " + i + " " + Arrays.toString(g.graph.get(i).toArray()));
+//        }
 
         
         for(int e = 0; e <  gr.n; ++e) {
         	g.orderIndex[gr.n - 1 - e] = gr.orderIndex[e];
         }
        
-        System.out.println("Reversed gr orderIndex: " + Arrays.toString(g.orderIndex));
+//        System.out.println("Reversed gr orderIndex: " + Arrays.toString(g.orderIndex));
         
         g.ccs();
       
