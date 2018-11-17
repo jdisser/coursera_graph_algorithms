@@ -1,49 +1,48 @@
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Random;
 import java.util.Scanner;
 
-public class StronglyConnected {
-	
-	static int n = 0;
-	static int m = 0;
-	static int[] pre;
-	static int[] post;
-	static int[] order;
-	static int[] postIndex;
-	static boolean[] linked;
-	static int clock = 1;
-	static ArrayList<ArrayList<Integer>> graph = null;
-	static ArrayList<ArrayList<Integer>> graphR = null;
-	private static Random random = new Random();
-	
-	
-    private static int numberOfStronglyConnectedComponents(ArrayList<ArrayList<Integer>> adj) {
-    	
-    	dfs();
 
-        order = Arrays.copyOf(post, n);
+class Graph {
+	
+	public ArrayList<ArrayList<Integer>> graph;
+	public int[] pre;
+	public int[] post;
+	public int[] order;
+	public int[] orderIndex;
+	public int[] visited;
+	public boolean[] linked;
+	public int clock;
+	public int n;
+	public int cc;
+	private Random random = new Random();
+	
+	public Graph(int n) {
+		this.n = n;
+		this.pre = new int[n];
+		this.post = new int[n];
+		this.orderIndex = new int[n];
+		this.linked = new boolean[n];
+        Arrays.fill(this.linked, false);
+        this.graph = new ArrayList<ArrayList<Integer>>();
         
-        randomizedQuickTopoSort(order, postIndex, 0, n - 1);
-        
-        //TODO: implement the CC count algorithm here
-        
-        
-        ArrayList<Integer> result = new ArrayList<Integer>();
-        
-        for(int e = n - 1; e >= 0; --e) {
-        	result.add(postIndex[e]);
+        for (int i = 0; i < n; i++) {
+//        	System.out.println("Added v: " + i);
+            this.graph.add(new ArrayList<Integer>());
+            this.orderIndex[i] = i;
         }
-        return 0;
-    }
-    
-    private static void explore(int x) {
+        
+        this.clock = 1;
+        this.cc = 1;
+	}
+	
+	public void explore(int x) {
     	
     	if (pre[x] > 0)					//allow 2nd visit for singleton vertexes with negative pre values
     		return;
     	
-		pre[x] = clock;
+    	pre[x] = clock;
 		++clock;
 		
 		ArrayList<Integer> al = graph.get(x);
@@ -52,7 +51,7 @@ public class StronglyConnected {
 			linked[x] = true;
 		
 		if(al.isEmpty() && linked[x] == false)	//if this vertex is linked don't allow more visits
-				pre[x] *= -1;					//This vertex might be connected and included in a 2nd visit
+			this.pre[x] *= -1;					//This vertex might be connected and included in a 2nd visit
 		
 //		System.out.println("explore x: " + x + " v->al: " + Arrays.toString(al.toArray()));
 		
@@ -66,8 +65,8 @@ public class StronglyConnected {
 		++clock;
 //		System.out.println("x: " + x + " pre: " + pre[x] + " post: " + post[x]);
 	}
-    
-    private static void dfs() {
+	
+	public void dfs() {
     	for(int i = 0; i < n; ++i) {
     		pre[i] = 0;
     		post[i] = 0;
@@ -79,82 +78,118 @@ public class StronglyConnected {
     	}
     		
     }
-    
-    private static void randomizedQuickTopoSort(int[] a, int[] ai, int l, int r) {
+	
+	public void toposort() {
+		order = Arrays.copyOf(post, n);
+		randomizedQuickTopoSort(0, n - 1);
+	}
+	
+	private void randomizedQuickTopoSort(int l, int r) {
         if (l >= r) {
             return;
         }
         int k = random.nextInt(r - l + 1) + l;
-        int t = a[l];
-        a[l] = a[k];
-        a[k] = t;
+        int t = order[l];
+        order[l] = order[k];
+        order[k] = t;
         
-        t = ai[l];			//mirror the operations on the index array
-        ai[l] = ai[k];
-        ai[k] = t;
+        t = orderIndex[l];			//mirror the operations on the index array
+        orderIndex[l] = orderIndex[k];
+        orderIndex[k] = t;
         
         //use partition2
         
-        int m = partition2(a, ai, l, r);
-        randomizedQuickTopoSort(a, ai, l, m - 1);
-        randomizedQuickTopoSort(a, ai, m + 1, r);
+        int m = partition2(l, r);
+        randomizedQuickTopoSort(l, m - 1);
+        randomizedQuickTopoSort(m + 1, r);
         
 
     }
-    
-    private static int partition2(int[] a, int[] ai, int l, int r) {
-        int x = a[l];
+	
+	private int partition2(int l, int r) {
+        int x = order[l];
         int j = l;
         for (int i = l + 1; i <= r; i++) {
-            if (a[i] <= x) {
+            if (order[i] <= x) {
                 j++;
-                int t = a[i];
-                a[i] = a[j];
-                a[j] = t;
+                int t = order[i];
+                order[i] = order[j];
+                order[j] = t;
                 
-                t = ai[i];				//mirror the operations on the index array
-                ai[i] = ai[j];
-                ai[j] = t;
+                t = orderIndex[i];				//mirror the operations on the index array
+                orderIndex[i] = orderIndex[j];
+                orderIndex[j] = t;
             }
         }
-        int t = a[l];
-        a[l] = a[j];
-        a[j] = t;
+        int t = order[l];
+        order[l] = order[j];
+        order[j] = t;
         
-        t = ai[l];				//mirror the operations on the index array
-        ai[l] = ai[j];
-        ai[j] = t;
+        t = orderIndex[l];				//mirror the operations on the index array
+        orderIndex[l] = orderIndex[j];
+        orderIndex[j] = t;
         return j;
     }
+	
+	
+}
+
+
+public class StronglyConnected {
+	
+
+	
+    private static int numberOfStronglyConnectedComponents(Graph g, Graph gr) {
+    	
+    	gr.dfs();
+        gr.toposort();
+
+        
+        for(int e = 0; e <  gr.n; ++e) {
+        	g.orderIndex[gr.n - e] = gr.orderIndex[e];
+        }
+        
+        //TODO: implement the CC count algorithm here
+        // implement cc count in Graph and call after loading the order index from Gr
+        
+        
+        
+        
+        
+        return 0;
+    }
+    
+    
+    
+    
+    
+    
+    
+    
 
     public static void main(String[] args) {
     	Scanner scanner = new Scanner(System.in);
     	
+    	int n;
+    	int m;
+    	
+    	
         n = scanner.nextInt();
         m = scanner.nextInt();
-        pre = new int[n];
-        post = new int[n];
-        postIndex = new int[n];
-        linked = new boolean[n];
-        Arrays.fill(linked, false);
-        graph = new ArrayList<ArrayList<Integer>>();
-        graphR = new ArrayList<ArrayList<Integer>>();
+
+        Graph g = new Graph(n);
+        Graph gr = new Graph(n);
         
-        for (int i = 0; i < n; i++) {
-//        	System.out.println("Added v: " + i);
-            graph.add(new ArrayList<Integer>());
-            graphR.add(new ArrayList<Integer>());
-            postIndex[i] = i;
-        }
         for (int i = 0; i < m; i++) {
             int x, y;
             x = scanner.nextInt();
             y = scanner.nextInt();
-            graph.get(x - 1).add(y - 1);	//shift all indexes to 0 based
-            graphR.get(y - 1).add(x -1);	//reversed graph to find sinks
+            g.graph.get(x - 1).add(y - 1);	//shift all indexes to 0 based
+            gr.graph.get(y - 1).add(x -1);	//reversed graph to find sinks
 
         }
-        System.out.println(numberOfStronglyConnectedComponents(graph));
+        System.out.println(numberOfStronglyConnectedComponents(g, gr));
+        scanner.close();
     }
 }
 
