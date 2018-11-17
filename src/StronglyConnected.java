@@ -11,7 +11,7 @@ class Graph {
 	public int[] post;
 	public int[] order;
 	public int[] orderIndex;
-	public int[] visited;
+	public int[] connected;
 	public boolean[] linked;
 	public int clock;
 	public int n;
@@ -31,6 +31,7 @@ class Graph {
 //        	System.out.println("Added v: " + i);
             this.graph.add(new ArrayList<Integer>());
             this.orderIndex[i] = i;
+            this.connected[i] = 0;
         }
         
         this.clock = 1;
@@ -66,6 +67,26 @@ class Graph {
 //		System.out.println("x: " + x + " pre: " + pre[x] + " post: " + post[x]);
 	}
 	
+	public void exploreConnected(int x, int ci) {
+    	
+    	if (connected[x] != 0)					
+    		return;
+    	
+    	connected[x] = ci;
+		
+		ArrayList<Integer> al = graph.get(x);
+		
+		if(!al.isEmpty())
+			return;
+		
+		for(int vx : al) {
+
+			if(connected[vx] == 0)
+				exploreConnected(vx, ci);
+		}
+
+	}
+	
 	public void dfs() {
     	for(int i = 0; i < n; ++i) {
     		pre[i] = 0;
@@ -78,6 +99,15 @@ class Graph {
     	}
     		
     }
+	
+	public void ccs() {
+		for (int i = 0; i < n; ++i) {
+			if(connected[orderIndex[i]] == 0) {
+				exploreConnected(orderIndex[i], cc);
+				++cc;
+			}
+		}
+	}
 	
 	public void toposort() {
 		order = Arrays.copyOf(post, n);
@@ -146,17 +176,12 @@ public class StronglyConnected {
 
         
         for(int e = 0; e <  gr.n; ++e) {
-        	g.orderIndex[gr.n - e] = gr.orderIndex[e];
+        	g.orderIndex[gr.n - 1 - e] = gr.orderIndex[e];
         }
-        
-        //TODO: implement the CC count algorithm here
-        // implement cc count in Graph and call after loading the order index from Gr
-        
-        
-        
-        
-        
-        return 0;
+       
+        g.ccs();
+      
+        return g.cc;
     }
     
     
