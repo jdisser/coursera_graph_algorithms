@@ -24,6 +24,7 @@ class Graph {
 		this.post = new int[n];
 		this.orderIndex = new int[n];
 		this.linked = new boolean[n];
+		this.connected = new int[n];
         Arrays.fill(this.linked, false);
         this.graph = new ArrayList<ArrayList<Integer>>();
         
@@ -35,7 +36,7 @@ class Graph {
         }
         
         this.clock = 1;
-        this.cc = 1;
+        this.cc = 0;
 	}
 	
 	public void explore(int x) {
@@ -69,6 +70,8 @@ class Graph {
 	
 	public void exploreConnected(int x, int ci) {
     	
+		System.out.println("exploreConnected x: " + x + " ci: " + ci + " connected[x]: " + connected[x]);
+		
     	if (connected[x] != 0)					
     		return;
     	
@@ -76,7 +79,7 @@ class Graph {
 		
 		ArrayList<Integer> al = graph.get(x);
 		
-		if(!al.isEmpty())
+		if(al.isEmpty())
 			return;
 		
 		for(int vx : al) {
@@ -101,10 +104,16 @@ class Graph {
     }
 	
 	public void ccs() {
+		
+		System.out.println("Initial in ccs cc: " + cc + " connected[]: " + Arrays.toString(connected));
+		
+		
 		for (int i = 0; i < n; ++i) {
 			if(connected[orderIndex[i]] == 0) {
-				exploreConnected(orderIndex[i], cc);
 				++cc;
+				exploreConnected(orderIndex[i], cc);
+				System.out.println("cc: " + cc + " connected[]: " + Arrays.toString(connected));
+				
 			}
 		}
 	}
@@ -173,12 +182,18 @@ public class StronglyConnected {
     	
     	gr.dfs();
         gr.toposort();
+        
+        for(int i = 0; i < g.n; ++i) {
+        	System.out.println("v: " + i + " " + Arrays.toString(g.graph.get(i).toArray()));
+        }
 
         
         for(int e = 0; e <  gr.n; ++e) {
         	g.orderIndex[gr.n - 1 - e] = gr.orderIndex[e];
         }
        
+        System.out.println("Reversed gr orderIndex: " + Arrays.toString(g.orderIndex));
+        
         g.ccs();
       
         return g.cc;
