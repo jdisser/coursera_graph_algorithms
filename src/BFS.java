@@ -64,7 +64,7 @@ class Graph {
 	public int distance(int s, int t) {
         //write your code here
 		bfs(s);
-        return dist[t];
+        return dist[t] > n ? -1 : dist[t];
     }
 }
 
