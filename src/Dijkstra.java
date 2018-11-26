@@ -37,6 +37,8 @@ class Graph {
         
         this.heap = new ArrayList<Node>();
         
+        this.map = new ArrayList<Node>();
+        
         for (int i = 0; i < n; i++) {
         	
             this.graph.add(new ArrayList<Edge>());
@@ -117,6 +119,8 @@ class Graph {
 	
 	public int distance(int s, int t) {
 		
+		//implements Dijkstra's algorithm
+		
 		root = s;
 		
 		decreaseKey(s, 0);							//start the algorithm on this node
@@ -158,8 +162,8 @@ public class Dijkstra {
         
         for (int i = 0; i < m; i++) {
             int x, y, w;
-            x = scanner.nextInt();
-            y = scanner.nextInt();
+            x = scanner.nextInt() - 1;		//shift indexes to 0 based
+            y = scanner.nextInt() - 1;
             w = scanner.nextInt();
 
             Edge e = new Edge(y, w);
