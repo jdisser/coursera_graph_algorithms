@@ -59,8 +59,8 @@ class Graph {
 	
 	private void minSiftDown(int i) {
 		
-		System.out.println("minSiftDown 1: " + i);
-		printHeap();
+//		System.out.println("minSiftDown 1: " + i);
+//		printHeap();
 		
     	int mini = i;
     	int li = heap.size() - 1;	//0 based last index
@@ -92,12 +92,12 @@ class Graph {
 	private void minSiftUp(int i) {
 		
 		int pi;
-		System.out.println(" minSiftUp i: " + i);
-		printHeap();
+//		System.out.println(" minSiftUp i: " + i);
+//		printHeap();
 		if(i > 0) {
 			pi = (i - 1)/2;
 			
-			System.out.println(" minSiftUp pi: " + pi);
+//			System.out.println(" minSiftUp pi: " + pi);
 			
 			if(heap.get(pi).dist > heap.get(i).dist) {
 				swap(pi, i);
@@ -120,7 +120,7 @@ class Graph {
 	
 	private void decreaseKey(int i, long d) {
 		
-		System.out.println(" decreaseKey i: " + i + " d: " + d);
+//		System.out.println(" decreaseKey i: " + i + " d: " + d);
 		Node dn = map.get(i);
 		dn.dist = d;
 		int dni = heap.indexOf(dn);
@@ -148,7 +148,7 @@ class Graph {
 			Node r = getMin();
 			r.visited = true;
 			
-			System.out.println("processing Node: " + r.index);
+//			System.out.println("processing Node: " + r.index);
 			
 			
 			for(Edge e : graph.get(r.index)) {
