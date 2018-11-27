@@ -4,7 +4,7 @@ import java.util.*;
 
 class Node {
 	public int index;
-	public int dist;
+	public long dist;
 	public boolean visited;
 	public int pindex;
 }
@@ -45,7 +45,7 @@ class Graph {
             
             Node node = new Node();
             node.index = i;
-            node.dist = Integer.MAX_VALUE;
+            node.dist = Long.MAX_VALUE;
             node.visited = false;
             node.pindex = -1;
             
@@ -101,7 +101,7 @@ class Graph {
 		return nm;
 	}
 	
-	private void decreaseKey(int i, int d) {
+	private void decreaseKey(int i, long d) {
 		Node dn = map.get(i);
 		dn.dist = d;
 		int dni = heap.indexOf(dn);
@@ -117,7 +117,7 @@ class Graph {
     	
     }
 	
-	public int distance(int s, int t) {
+	public long distance(int s, int t) {
 		
 		//implements Dijkstra's algorithm
 		
@@ -130,7 +130,7 @@ class Graph {
 			r.visited = true;
 			for(Edge e : graph.get(r.index)) {
 				
-				if(r.dist == Integer.MAX_VALUE)		//this is an unreachable node if it's dist is infinite
+				if(r.dist == Long.MAX_VALUE)		//this is an unreachable node if it's dist is infinite
 					break;
 				
 				if(map.get(e.target).dist > r.dist + e.length) {
@@ -141,7 +141,7 @@ class Graph {
 		}
 		
 		
-        return map.get(t).dist == Integer.MAX_VALUE? -1 : map.get(t).dist;
+        return map.get(t).dist == Long.MAX_VALUE? -1 : map.get(t).dist;
     }
 
 }
