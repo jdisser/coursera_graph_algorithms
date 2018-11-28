@@ -1,4 +1,3 @@
-import java.awt.List;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Queue;
@@ -62,39 +61,49 @@ class Graph {
 
 	}
 	
-	private boolean fordBellman(Node node) {
+	private void clearVisited() {
+		for(Node n : map) {
+			n.visited = false;
+		}
+	}
+	
+	private boolean fordBellman() {
 		
 		queue.clear();
-		queue.add(node);
+		clearVisited();
 		
 		boolean noChange = true;
-		
-		//TODO: add procedure to handle disjoint graphs
-		int nodes = 0;
-		
-		while(!queue.isEmpty()) {
-			Node u = queue.remove();
-			++nodes;
-			int ui = u.index;
-			for(Edge e : graph.get(ui)) {
-				if(map.get(e.target).dist > u.dist + e.length) {
-					map.get(e.target).dist = u.dist + e.length;
-					noChange = false;
+
+		for(Node s : map) {
+			
+			if(s.visited)
+				continue;
+			s.dist = 0;
+			queue.add(s);
+			
+			while(!queue.isEmpty()) {
+				Node u = queue.remove();
+				int ui = u.index;
+				u.visited = true;
+				for(Edge e : graph.get(ui)) {
+					Node v = map.get(e.target);
+					if(v.dist > u.dist + e.length) {
+						v.dist = u.dist + e.length;
+						queue.add(v);
+						v.pindex = u.index;
+						noChange = false;
+					}
 				}
-				queue.add(map.get(e.target));
 			}
 		}
-		
-		return noChange;
-		
+	
+		return noChange;	
 	}
 	
 	
 
 	public int negativeCycle() {
-       
-		Node node = map.get(root);
-		node.dist = 0;
+		
 		boolean noChange = false;
 		
 		if(n == 1)
@@ -103,15 +112,13 @@ class Graph {
 		int cycles = n - 1;
 		
 		do {
-			noChange = fordBellman(node);
+			noChange = fordBellman();
 			--cycles;
 			
 		} while (cycles > 0 && !noChange);
 		
-		return fordBellman(node)? 1 : 0;
-
+		return fordBellman()? 1 : 0;
     }
-
 }
 
 
