@@ -75,7 +75,7 @@ class Graph {
 		boolean noChange = true;
 
 		for(Node s : map) {
-			System.out.println("root node: " + s.index + " visited: " + s.visited);
+//			System.out.println("root node: " + s.index + " visited: " + s.visited);
 			if(s.visited)
 				continue;
 			s.dist = 0;
@@ -83,11 +83,11 @@ class Graph {
 			
 			while(!queue.isEmpty()) {
 				
-				System.out.print("queue[");
-				for(Node n : queue) {
-					System.out.print(n.index + " ");
-				}
-				System.out.println("]");
+//				System.out.print("queue[");
+//				for(Node n : queue) {
+//					System.out.print(n.index + " ");
+//				}
+//				System.out.println("]");
 				
 				
 				Node u = queue.remove();
@@ -115,7 +115,7 @@ class Graph {
 
 	public int negativeCycle() {
 		
-		System.out.println("negativeCycle:");
+//		System.out.println("negativeCycle:");
 		
 		boolean noChange = false;
 		
@@ -127,7 +127,7 @@ class Graph {
 		do {
 			noChange = fordBellman();
 			--cycles;
-			System.out.println("cycles: " + cycles + " noChange: " + noChange);
+//			System.out.println("cycles: " + cycles + " noChange: " + noChange);
 		} while (cycles > 0 && !noChange);
 		
 		return fordBellman()? 0 : 1;
