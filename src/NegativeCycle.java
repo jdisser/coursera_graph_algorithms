@@ -67,6 +67,15 @@ class Graph {
 		}
 	}
 	
+	
+	private void printQueue() {
+		System.out.print("queue[");
+		for(Node n : queue) {
+			System.out.print(n.index + " ");
+		}
+		System.out.println("]");
+	}
+	
 	private boolean fordBellman() {
 		
 		queue.clear();
@@ -83,11 +92,7 @@ class Graph {
 			
 			while(!queue.isEmpty()) {
 				
-//				System.out.print("queue[");
-//				for(Node n : queue) {
-//					System.out.print(n.index + " ");
-//				}
-//				System.out.println("]");
+//				printQueue();
 				
 				
 				Node u = queue.remove();
@@ -95,6 +100,14 @@ class Graph {
 				u.visited = true;
 				for(Edge e : graph.get(ui)) {
 					Node v = map.get(e.target);
+					
+					if(e.target == u.index && e.length < 0) {			//detect negative self loops
+//						System.out.println("negative self loop:");
+						noChange = false;
+						return noChange;
+					}
+						
+					
 					if(v.dist > u.dist + e.length) {
 						v.dist = u.dist + e.length;
 						noChange = false;
@@ -119,8 +132,8 @@ class Graph {
 		
 		boolean noChange = false;
 		
-		if(n == 1)
-			return 0;
+//		if(n == 1)
+//			return 0;
 		
 		int cycles = n - 1;
 		
