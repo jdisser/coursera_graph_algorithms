@@ -66,7 +66,7 @@ class Graph {
 		//in a disjoint graph, it does not generate a shortest path nor does it have a true source
 		//from which to measure distance
 		
-		boolean noChange;
+		boolean noChange = true;
 		
 		if(queue.size() == 0)
 			return true;		//if there are no negative edges there can not be negative cycles
@@ -77,16 +77,29 @@ class Graph {
 			
 			noChange = true;
 			
+			System.out.println("cycle: " + cycles);
+			
 			for(Edge e : graph) {
 				Node u = map.get(e.source);		//source node
 				Node v = map.get(e.target);		//target node
 				
-				if(v.dist > u.dist + e.length) {
-					v.dist = u.dist + e.length;
-					noChange = false;
-				}	
-				--cycles;
+				System.out.print("e: [" + e.source + "," + e.target + "," + e.length + "] ");
+				System.out.print("u: [" + u.index + "," + u.dist + "] ");
+				System.out.print("v: [" + v.index + "," + v.dist + "] ");
+				
+				if(u.dist < Long.MAX_VALUE) {	//source not infinite
+					if(v.dist > u.dist + e.length) {
+						v.dist = u.dist + e.length;
+						noChange = false;
+						System.out.print("noChange: " + noChange + " --> ");
+						System.out.print("v: [" + v.index + "," + v.dist + "] ");
+					}
+				}
+				
+				System.out.println("");	
 			}
+			
+			--cycles;
 			
 		} while (cycles > 0 && !noChange);
 		
