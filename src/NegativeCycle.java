@@ -71,32 +71,32 @@ class Graph {
 		if(queue.size() == 0)
 			return true;		//if there are no negative edges there can not be negative cycles
 		
-		int cycles = n;
+		int cycles = n;			//if bellman ford doesn't converge in n - 1 cycles there is a negative cycle
 		
 		do {
 			
 			noChange = true;
 			
-			System.out.println("cycle: " + cycles);
+//			System.out.println("cycle: " + cycles);
 			
 			for(Edge e : graph) {
 				Node u = map.get(e.source);		//source node
 				Node v = map.get(e.target);		//target node
 				
-				System.out.print("e: [" + e.source + "," + e.target + "," + e.length + "] ");
-				System.out.print("u: [" + u.index + "," + u.dist + "] ");
-				System.out.print("v: [" + v.index + "," + v.dist + "] ");
+//				System.out.print("e: [" + e.source + "," + e.target + "," + e.length + "] ");
+//				System.out.print("u: [" + u.index + "," + u.dist + "] ");
+//				System.out.print("v: [" + v.index + "," + v.dist + "] ");
 				
-				if(u.dist < Long.MAX_VALUE) {	//source not infinite
+				if(u.dist < Long.MAX_VALUE) {	//if the source is not infinite
 					if(v.dist > u.dist + e.length) {
 						v.dist = u.dist + e.length;
 						noChange = false;
-						System.out.print("noChange: " + noChange + " --> ");
-						System.out.print("v: [" + v.index + "," + v.dist + "] ");
+//						System.out.print("noChange: " + noChange + " --> ");
+//						System.out.print("v: [" + v.index + "," + v.dist + "] ");
 					}
 				}
 				
-				System.out.println("");	
+//				System.out.println("");	
 			}
 			
 			--cycles;
@@ -134,7 +134,7 @@ public class NegativeCycle {
             g.graph.add(e);
             
             if(e.length < 0) {
-            	g.map.get(x).dist = 0;		//initialize the source of negative edges to 0
+            	g.map.get(x).dist = 0;		//initialize the source of negative edges to 0!
             	g.queue.add(g.map.get(x));	//save to count negative edges
             }
             
