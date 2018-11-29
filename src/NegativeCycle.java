@@ -12,23 +12,25 @@ class Node {
 
 class Edge {
 	public int target;
+	public int source;
 	public int length;
 	
-	public Edge(int t, int l) {
+	public Edge(int t, int s, int l) {
 		this.target = t;
+		this.source = s;
 		this.length = l;
 	}
 }
 
 class Graph {
 	
-	public ArrayList<ArrayList<Edge>> graph;		//adjacency list of edges
+	public ArrayList<Edge> graph;					//list of edges
 	public ArrayList<Node> map;						//returns Nodes by vertex (index)
 	public Queue<Node> queue;
 	
 	
 	
-	public int root;
+
 	public int n;									//|V| number of nodes
 	public int m;									//|E| number of edges
 
@@ -37,113 +39,63 @@ class Graph {
 		this.n = n;
 		this.m = m;
 
-        this.graph = new ArrayList<ArrayList<Edge>>();
+        this.graph = new ArrayList<Edge>();
         
         this.queue = new LinkedList<Node>();
         
         this.map = new ArrayList<Node>();
         
         for (int i = 0; i < n; i++) {
-        	
-            this.graph.add(new ArrayList<Edge>());
-            
+ 
             Node node = new Node();
             node.index = i;
             node.dist = Long.MAX_VALUE;
             node.visited = false;
             node.pindex = -1;
-            
-            
+           
             map.add(i, node);
         }
-        
-        this.root = 0;		//arbitrary selection of the first node as the root
 
 	}
-	
-	private void clearVisited() {
-		for(Node n : map) {
-			n.visited = false;
-		}
-	}
-	
-	
-	private void printQueue() {
-		System.out.print("queue[");
-		for(Node n : queue) {
-			System.out.print(n.index + " ");
-		}
-		System.out.println("]");
-	}
-	
-	private boolean fordBellman() {
 		
-		queue.clear();
-		clearVisited();
-		
-		boolean noChange = true;
 
-		for(Node s : map) {
-//			System.out.println("root node: " + s.index + " visited: " + s.visited);
-			if(s.visited)
-				continue;
-			s.dist = 0;
-			queue.add(s);
-			
-			while(!queue.isEmpty()) {
-				
-//				printQueue();
-				
-				
-				Node u = queue.remove();
-				int ui = u.index;
-				u.visited = true;
-				for(Edge e : graph.get(ui)) {
-					Node v = map.get(e.target);
-					
-					if(e.target == u.index && e.length < 0) {			//detect negative self loops
-//						System.out.println("negative self loop:");
-						noChange = false;
-						return noChange;
-					}
-						
-					
-					if(v.dist > u.dist + e.length) {
-						v.dist = u.dist + e.length;
-						noChange = false;
-					}
-					if(!v.visited) {
-						queue.add(v);
-						v.pindex = u.index;
-					}
-					
-				}
-			}
-		}
 	
-		return noChange;	
-	}
-	
-	
-
-	public int negativeCycle() {
+	private boolean bellmanFord() {
 		
-//		System.out.println("negativeCycle:");
+		//this is an adaptation of the bellman-ford algorithm to specifically detect a negative cycle
+		//in a disjoint graph, it does not generate a shortest path nor does it have a true source
+		//from which to measure distance
 		
-		boolean noChange = false;
+		boolean noChange;
 		
-//		if(n == 1)
-//			return 0;
+		if(queue.size() == 0)
+			return true;		//if there are no negative edges there can not be negative cycles
 		
-		int cycles = n - 1;
+		int cycles = n;
 		
 		do {
-			noChange = fordBellman();
-			--cycles;
-//			System.out.println("cycles: " + cycles + " noChange: " + noChange);
+			
+			noChange = true;
+			
+			for(Edge e : graph) {
+				Node u = map.get(e.source);		//source node
+				Node v = map.get(e.target);		//target node
+				
+				if(v.dist > u.dist + e.length) {
+					v.dist = u.dist + e.length;
+					noChange = false;
+				}	
+				--cycles;
+			}
+			
 		} while (cycles > 0 && !noChange);
 		
-		return fordBellman()? 0 : 1;
+		return noChange;
+	}
+
+	public int negativeCycle() {
+
+		return bellmanFord()? 0 : 1; 	//if there is no change after n-1 + 1 cycles (or less) then there are 0 neg cycles
     }
 }
 
@@ -165,9 +117,13 @@ public class NegativeCycle {
             y = scanner.nextInt() - 1;
             w = scanner.nextInt();
 
-            Edge e = new Edge(y, w);
-            g.graph.get(x).add(e);
+            Edge e = new Edge(y, x, w);
+            g.graph.add(e);
             
+            if(e.length < 0) {
+            	g.map.get(x).dist = 0;		//initialize the source of negative edges to 0
+            	g.queue.add(g.map.get(x));	//save to count negative edges
+            }
             
         }
         System.out.println(g.negativeCycle());
