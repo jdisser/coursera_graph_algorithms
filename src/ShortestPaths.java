@@ -79,7 +79,7 @@ class Graph {
 			
 			noChange = true;
 			
-			System.out.println("cycle: " + cycles);
+//			System.out.println("cycle: " + cycles);
 			
 			for(Edge e : graph) {
 				Node u = map.get(e.source);		//source node
@@ -87,9 +87,9 @@ class Graph {
 				
 				v.shortest = true;
 				
-				System.out.print("e: [" + e.source + "," + e.target + "," + e.length + "] ");
-				System.out.print("u: [" + u.index + "," + u.dist + "] ");
-				System.out.print("v: [" + v.index + "," + v.dist + "] ");
+//				System.out.print("e: [" + e.source + "," + e.target + "," + e.length + "] ");
+//				System.out.print("u: [" + u.index + "," + u.dist + "] ");
+//				System.out.print("v: [" + v.index + "," + v.dist + "] ");
 				
 				if(u.dist < Long.MAX_VALUE) {	//if the source is not infinite
 					if(v.dist > u.dist + e.length) {
@@ -98,12 +98,12 @@ class Graph {
 						v.shortest = false;
 						
 						noChange = false;
-						System.out.print("noChange: " + noChange + " --> ");
-						System.out.print("v: [" + v.index + "," + v.dist + "] ");
+//						System.out.print("noChange: " + noChange + " --> ");
+//						System.out.print("v: [" + v.index + "," + v.dist + "] ");
 					}
 				}
 				
-				System.out.println("");	
+//				System.out.println("");	
 			}
 			
 			--cycles;
