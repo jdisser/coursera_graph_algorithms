@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.Scanner;
 import static java.lang.Math.pow;
 
@@ -18,12 +19,12 @@ class Node {
 class Edge {
 	public Node v1;
 	public Node v2;
-	public double length;
+	public double len;
 	
 	public Edge(Node v1, Node v2) {
 		this.v1 = v1;
 		this.v2 = v2;
-		this.length = setLength();
+		this.len = setLength();
 	}
 	
 	private double setLength() {
@@ -35,12 +36,12 @@ class Edge {
 class Graph {
 	
 	public ArrayList<Node> graph;
-	public ArrayList<Edge> eQueue;
+	public ArrayList<Edge> heap;
 	public ArrayList<Edge> xMst;
 	
 	public Graph () {
 		this.graph = new ArrayList<Node>();
-		this.eQueue = new ArrayList<Edge>();
+		this.heap = new ArrayList<Edge>();
 		this.xMst = new ArrayList<Edge>();
 	}
 	
@@ -53,6 +54,73 @@ class Graph {
 		graph.get(vi).index = vi;
 		
 		return vi;	
+	}
+	
+	public void setEdges() {
+		
+	}
+	
+	private void minSiftDown(int i) {
+		
+//		System.out.println("minSiftDown 1: " + i);
+//		printHeap();
+		
+    	int mini = i;
+    	int li = heap.size() - 1;	//0 based last index
+    	int left = 2*i + 1;
+    	int rght = 2*i + 2;
+    	if(left <= li && heap.get(left).len < heap.get(mini).len) {
+    		mini = left;
+    	}
+    	if(rght <= li && heap.get(rght).len < heap.get(mini).len) {
+    		mini = rght;
+    	}
+    	if(mini != i) {
+	   		swap(i, mini);
+	   		minSiftDown(mini);
+    	}	
+    }
+	
+	private void swap(int i, int n) {
+    	
+    	Edge te = heap.get(i);
+    	heap.set(i, heap.get(n));
+    	heap.set(n, te);
+    	
+    }
+	
+	private void minSiftUp(int i) {
+		
+		int pi;
+//		System.out.println(" minSiftUp i: " + i);
+//		printHeap();
+		if(i > 0) {
+			pi = (i - 1)/2;
+			
+//			System.out.println(" minSiftUp pi: " + pi);
+			
+			if(heap.get(pi).len > heap.get(i).len) {
+				swap(pi, i);
+				minSiftUp(pi);
+			}
+			
+		}
+
+	}
+	
+	private Edge getMin() {
+		
+		Edge nm = heap.get(0);
+		swap(0, heap.size() - 1);
+		heap.remove(heap.size() - 1);
+		minSiftDown(0);
+		
+		return nm;
+	}
+	
+	private void addEdge(Edge e) {
+		heap.add(e);
+		minSiftUp(heap.indexOf(e));
 	}
 	
 	
