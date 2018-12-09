@@ -35,9 +35,9 @@ class Edge {
 
 class Graph {
 	
-	public ArrayList<Node> graph;
-	public ArrayList<Edge> heap;
-	public ArrayList<Edge> xMst;
+	public ArrayList<Node> graph;		//the disjoint set of all vertices in the graph
+	public ArrayList<Edge> heap;		//a min priority queue that is indexed on edge length
+	public ArrayList<Edge> xMst;		//the set of edges that are members of the Minimum Spanning Tree
 	
 	public Graph () {
 		this.graph = new ArrayList<Node>();
@@ -51,12 +51,24 @@ class Graph {
 		
 		graph.add(v);
 		vi = graph.indexOf(v);
-		graph.get(vi).index = vi;
+		v.index = vi;
+		v.pindex = vi;			//initially all nodes are a tree
 		
 		return vi;	
 	}
 	
 	public void setEdges() {
+		//generate the set of fully connected edges for the undirected graph
+		
+		int vi;
+		
+		for(Node v : graph) {
+			vi = graph.indexOf(v);
+			for(int j = vi +1; j < graph.size(); ++j) {
+				Edge e = new Edge(v, graph.get(j));
+				addEdge(e);
+			}
+		}
 		
 	}
 	
@@ -122,6 +134,8 @@ class Graph {
 		heap.add(e);
 		minSiftUp(heap.indexOf(e));
 	}
+	
+	//TODO: add find() and union() for the disjoint set
 	
 	
 }
