@@ -7,12 +7,14 @@ class Node {
 	public int index;
 	public double x,y;
 	public int pindex;
+	public int rank;
 	
 	public Node (int x, int y) {
 		this.x = (double) x;
 		this.y = (double) y;
 		this.index = -1;
 		this.pindex = -1;
+		this.rank = 0;
 	}
 }
 
@@ -135,7 +137,35 @@ class Graph {
 		minSiftUp(heap.indexOf(e));
 	}
 	
-	//TODO: add find() and union() for the disjoint set
+	//Disjoint set methods for nodes using path compression and rank heuristics
+	
+	private int find(int i) {
+		
+		Node n = graph.get(i);
+		
+		if(n.pindex != n.index) {
+			i = n.pindex;
+			n.pindex = find(i);
+		}
+		
+		return n.pindex;		
+	}
+	
+	private void union(int v1, int v2) {
+		Node t1 = graph.get(find(v1));
+		Node t2 = graph.get(find(v2));
+		
+		if(t1.rank > t2.rank) {
+			t2.pindex = t1.index;
+		} else {
+			t1.pindex = t2.index;
+		}
+		
+		if(t1.rank == t2.rank) {
+			++t2.rank;
+		}
+
+	}
 	
 	
 }
