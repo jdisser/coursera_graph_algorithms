@@ -2,6 +2,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Scanner;
 import static java.lang.Math.pow;
+import static java.lang.Math.sqrt;
 
 class Node {
 	public int index;
@@ -151,9 +152,8 @@ class Graph {
 		return n.pindex;		
 	}
 	
-	private void union(int v1, int v2) {
-		Node t1 = graph.get(find(v1));
-		Node t2 = graph.get(find(v2));
+	private void union(Node t1, Node t2) {
+		
 		
 		if(t1.rank > t2.rank) {
 			t2.pindex = t1.index;
@@ -167,6 +167,29 @@ class Graph {
 
 	}
 	
+	private void generateMST() {
+		
+		setEdges();
+		
+		Edge e = null;
+		
+		while(!heap.isEmpty()) {
+			e = getMin();
+			if(find(e.v1.index) != find(e.v2.index)) {
+				xMst.add(e);
+				union(e.v1,e.v2);
+			}		
+		}
+	}
+	
+	public double minimumDistance() {
+		generateMST();
+        double result = 0.;
+        for(Edge e : xMst) {			//reduces sqrt calls from n^2 to n-1
+        	result += sqrt(e.len);
+        }
+        return result;
+    }
 	
 }
 
@@ -175,11 +198,7 @@ class Graph {
 
 
 public class ConnectingPoints {
-    private static double minimumDistance(int[] x, int[] y) {
-        double result = 0.;
-        //write your code here
-        return result;
-    }
+    
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
@@ -197,7 +216,7 @@ public class ConnectingPoints {
             Node v = new Node(x, y);
             V.addNode(v);
         }
-        System.out.println(minimumDistance(x, y));
+        System.out.println(V.minimumDistance());
     }
 }
 
