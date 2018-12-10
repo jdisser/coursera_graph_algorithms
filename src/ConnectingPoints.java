@@ -1,5 +1,4 @@
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.Scanner;
 import static java.lang.Math.pow;
 import static java.lang.Math.sqrt;
@@ -87,12 +86,12 @@ class Graph {
 			for(int j = vi +1; j < graph.size(); ++j) {
 				Edge e = new Edge(v, graph.get(j));
 				addEdge(e);
-				printEdge(e);
+//				printEdge(e);
 			}
 		}
 		
 		vi = heap.size();
-		System.out.println("generated edges: " + vi);
+//		System.out.println("generated edges: " + vi);
 		
 	}
 	
@@ -196,7 +195,7 @@ class Graph {
 			++t2.rank;
 		}
 		
-		printGraph();
+//		printGraph();
 
 	}
 	
@@ -206,14 +205,14 @@ class Graph {
 		
 		Edge e = null;
 		
-		System.out.println("Generating MST:");
+//		System.out.println("Generating MST:");
 		
 		while(!heap.isEmpty()) {
 			e = getMin();
 			if(find(e.v1.index) != find(e.v2.index)) {
 				xMst.add(e);
 				union(e.v1,e.v2);
-				printEdge(e);
+//				printEdge(e);
 			}		
 		}
 	}
@@ -225,8 +224,8 @@ class Graph {
         	result += sqrt(e.len);
         }
         
-        int en = xMst.size();
-        System.out.println("Number of edges: " + en);
+//        int en = xMst.size();
+//        System.out.println("Number of edges: " + en);
         
         return result;
     }
@@ -258,7 +257,7 @@ public class ConnectingPoints {
         }
         
         
-        V.printGraph();
+//        V.printGraph();
 
         
         System.out.println(V.minimumDistance());
