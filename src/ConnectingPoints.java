@@ -60,6 +60,23 @@ class Graph {
 		return vi;	
 	}
 	
+	public void printGraph() {
+		
+		System.out.println("Graph: ");
+		for(Node n : graph) {
+			System.out.print(" " + n.x + "|" + n.y + " i:" + n.index + " p:" + n.pindex + " ");
+		}
+        System.out.println("");
+        System.out.println("--------------------------");
+	}
+	
+	
+	public void printEdge(Edge e) {
+		System.out.print(" " + e.v1.index + "-" + e.v2.index + ":" + e.len + " ");
+	}
+	
+	
+	
 	public void setEdges() {
 		//generate the set of fully connected edges for the undirected graph
 		
@@ -70,8 +87,12 @@ class Graph {
 			for(int j = vi +1; j < graph.size(); ++j) {
 				Edge e = new Edge(v, graph.get(j));
 				addEdge(e);
+				printEdge(e);
 			}
 		}
+		
+		vi = heap.size();
+		System.out.println("generated edges: " + vi);
 		
 	}
 	
@@ -152,7 +173,17 @@ class Graph {
 		return n.pindex;		
 	}
 	
-	private void union(Node t1, Node t2) {
+	private void union(Node n1, Node n2) {
+		
+		
+		int p1, p2;
+		
+		p1 = n1.index;
+		p2 = n2.index;
+		
+		Node t1 = graph.get(find(p1));
+		Node t2 = graph.get(find(p2));
+		
 		
 		
 		if(t1.rank > t2.rank) {
@@ -164,6 +195,8 @@ class Graph {
 		if(t1.rank == t2.rank) {
 			++t2.rank;
 		}
+		
+		printGraph();
 
 	}
 	
@@ -173,11 +206,14 @@ class Graph {
 		
 		Edge e = null;
 		
+		System.out.println("Generating MST:");
+		
 		while(!heap.isEmpty()) {
 			e = getMin();
 			if(find(e.v1.index) != find(e.v2.index)) {
 				xMst.add(e);
 				union(e.v1,e.v2);
+				printEdge(e);
 			}		
 		}
 	}
@@ -188,6 +224,10 @@ class Graph {
         for(Edge e : xMst) {			//reduces sqrt calls from n^2 to n-1
         	result += sqrt(e.len);
         }
+        
+        int en = xMst.size();
+        System.out.println("Number of edges: " + en);
+        
         return result;
     }
 	
@@ -216,7 +256,13 @@ public class ConnectingPoints {
             Node v = new Node(x, y);
             V.addNode(v);
         }
+        
+        
+        V.printGraph();
+
+        
         System.out.println(V.minimumDistance());
+        scanner.close();
     }
 }
 
