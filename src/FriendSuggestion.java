@@ -22,10 +22,12 @@ class Node {
 
 class Edge {
 	public int target;
+	public int source;
 	public int length;
 	
-	public Edge(int t, int l) {
+	public Edge(int s, int t, int l) {
 		this.target = t;
+		this.source = s;
 		this.length = l;
 	}
 }
@@ -37,6 +39,8 @@ class BiGraph {
 	public ArrayList<Node> heap;					//priority queue with method to update key values
 	public ArrayList<Node> heapR;					//priority queue for reversed graph
 	public ArrayList<Node> map;						//returns Nodes by vertex (index)
+	public ArrayList<Edge> edges;					//copy of original data for multiple queries
+	public ArrayList<Edge> edgesR;
 	
 	//TODO: implement copies of the heaps to restore them for each query
 	
@@ -59,11 +63,9 @@ class BiGraph {
         for (int i = 0; i < n; i++) {
         	
             this.graph.add(new ArrayList<Edge>());
+            this.graphR.add(new ArrayList<Edge>());
             
             Node node = new Node(i);
-
-            heap.add(i, node);
-            heapR.add(i, node);
             map.add(i, node);
         }
         
@@ -71,12 +73,37 @@ class BiGraph {
 
 	}
 	
-	public void addEdges(int x, int y, int c) {
-        Edge e = new Edge(y, c);
-        graph.get(x).add(e);
-        Edge er = new Edge(x, c);
-        graphR.get(y).add(er);
+	public void initializeQueues() {
+		
+		heap.clear();
+		heapR.clear();
+		
+		for(Node n : map) {
+			n.dist = Long.MAX_VALUE;
+			n.distR = Long.MAX_VALUE;
+			n.visited = false;
+			n.visitedR = false;
+			n.pindex = -1;
+			
+            heap.add(n);			//was (n.index, n)
+            heapR.add(n);
+
+			
+		}
 	}
+	
+	
+	public void addEdges(int x, int y, int c) {		//(source, target, length)
+
+		Edge e = new Edge(x, y, c);
+        Edge er = new Edge(y, x, c);
+
+        graph.get(x).add(e);
+		graphR.get(y).add(er);
+
+	}
+	
+	
 	
 	private void minSiftDown(int i, ArrayList<Node> h) {
 		
@@ -167,7 +194,7 @@ class BiGraph {
 		
 		//implements Dijkstra's algorithm
 
-		//TODO: implement initialization of heaps from a stored edge array
+		initializeQueues();
 		
 		decreaseKey(s, 0, heap, false);			//start the algorithm on this node in the forward direction
 		decreaseKey(t, 0, heapR, true);			//and from this one in the reverse direction (Reverse Graph => true)
@@ -251,12 +278,11 @@ public class FriendSuggestion {
             x = in.nextInt();
             y = in.nextInt();
             c = in.nextInt();
-            
-            
-            g.addEdges(x, y, c);
-            
+          
+            g.addEdges(x, y, c);         
 
         }
+        
 
         int t = in.nextInt();
 
