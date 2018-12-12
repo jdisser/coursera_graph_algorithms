@@ -1,110 +1,261 @@
 import java.util.Scanner;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.PriorityQueue;
+
+
+class Node {
+	public int index;
+	public long dist;			//this is the distance from the source in the graph
+	public long distR;			//this is the distance from the target in the reverse graph
+	public boolean visited;
+	public boolean visitedR;
+	public int pindex;
+	
+	public Node(int i) {
+        this.index = i;
+        this.dist = Long.MAX_VALUE;
+        this.distR = Long.MAX_VALUE;
+        this.visited = false;
+        this.visitedR = false;
+        this.pindex = -1;
+	}
+}
+
+class Edge {
+	public int target;
+	public int length;
+	
+	public Edge(int t, int l) {
+		this.target = t;
+		this.length = l;
+	}
+}
+
+class BiGraph {
+	
+	public ArrayList<ArrayList<Edge>> graph;		//adjacency list of edges
+	public ArrayList<ArrayList<Edge>> graphR;		//adjacency list of reversed edges
+	public ArrayList<Node> heap;					//priority queue with method to update key values
+	public ArrayList<Node> heapR;					//priority queue for reversed graph
+	public ArrayList<Node> map;						//returns Nodes by vertex (index)
+	
+	//TODO: implement copies of the heaps to restore them for each query
+	
+	
+	public int root;
+	public int n;
+
+	
+	public BiGraph(int n) {
+		this.n = n;
+
+        this.graph = new ArrayList<ArrayList<Edge>>();
+        this.graphR = new ArrayList<ArrayList<Edge>>();
+        
+        this.heap = new ArrayList<Node>();
+        this.heapR = new ArrayList<Node>();
+        
+        this.map = new ArrayList<Node>();
+        
+        for (int i = 0; i < n; i++) {
+        	
+            this.graph.add(new ArrayList<Edge>());
+            
+            Node node = new Node(i);
+
+            heap.add(i, node);
+            heapR.add(i, node);
+            map.add(i, node);
+        }
+        
+        this.root = -1;
+
+	}
+	
+	public void addEdges(int x, int y, int c) {
+        Edge e = new Edge(y, c);
+        graph.get(x).add(e);
+        Edge er = new Edge(x, c);
+        graphR.get(y).add(er);
+	}
+	
+	private void minSiftDown(int i, ArrayList<Node> h) {
+		
+//		System.out.println("minSiftDown 1: " + i);
+//		printHeap();
+		
+		
+		
+    	int mini = i;
+    	int li = h.size() - 1;	//0 based last index
+    	int left = 2*i + 1;
+    	int rght = 2*i + 2;
+    	if(left <= li && h.get(left).dist < h.get(mini).dist) {
+    		mini = left;
+    	}
+    	if(rght <= li && h.get(rght).dist < h.get(mini).dist) {
+    		mini = rght;
+    	}
+    	if(mini != i) {
+	   		swap(i, mini, h);
+	   		minSiftDown(mini, h);
+    	}
+   		
+    }
+	
+	private void printHeap(ArrayList<Node> h) {
+		System.out.print("heap: ");
+		for(Node n : h) {
+			System.out.print(n.index + ":" + n.dist + " ");
+		}
+		System.out.println(" ");
+	}
+	
+	
+	
+	private void minSiftUp(int i, ArrayList<Node> h) {
+		
+		int pi;
+//		System.out.println(" minSiftUp i: " + i);
+//		printHeap(h);
+		if(i > 0) {
+			pi = (i - 1)/2;
+			
+//			System.out.println(" minSiftUp pi: " + pi);
+			
+			if(h.get(pi).dist > h.get(i).dist) {
+				swap(pi, i, h);
+				minSiftUp(pi, h);
+			}
+			
+		}
+
+	}
+	
+	private Node getMin(ArrayList<Node> h) {
+		
+		Node nm = h.get(0);
+		swap(0, h.size() - 1, h);
+		h.remove(h.size() - 1);
+		minSiftDown(0, h);
+		
+		return nm;
+	}
+	
+	private void decreaseKey(int i, long d, ArrayList<Node> h, boolean reverse) {
+		
+//		System.out.println(" decreaseKey i: " + i + " d: " + d);
+		Node dn = map.get(i);
+		if(reverse) {
+			dn.distR = d;
+		} else {
+			dn.dist = d;
+		}
+		int dni = h.indexOf(dn);
+		minSiftUp(dni, h);
+	}
+
+    
+    private void swap(int i, int n, ArrayList<Node> h) {
+    	
+    	Node tn = h.get(i);
+    	h.set(i, h.get(n));
+    	h.set(n, tn);
+    	
+    }
+	
+	public long biDijkstra(int s, int t) {
+		
+		//implements Dijkstra's algorithm
+
+		//TODO: implement initialization of heaps from a stored edge array
+		
+		decreaseKey(s, 0, heap, false);			//start the algorithm on this node in the forward direction
+		decreaseKey(t, 0, heapR, true);			//and from this one in the reverse direction (Reverse Graph => true)
+		
+		long result = -1;						//if after processing all nodes in the graph this is unchanged the target is unreachable
+		
+		if(s == t) {
+			return 0;							//I found myself!!
+		}
+		
+		while(!heap.isEmpty() || !heapR.isEmpty()) {
+			
+			
+			if(!heap.isEmpty()) {						//process the next node in the forward graph
+				
+				Node r = getMin(heap);
+
+//				System.out.println("processing Node: " + r.index);
+
+				for(Edge e : graph.get(r.index)) {
+					
+					if(r.dist == Long.MAX_VALUE)		//this is an unreachable node if it's dist is infinite
+						break;
+					
+					if(map.get(e.target).dist > r.dist + e.length) {
+						decreaseKey(e.target, r.dist + e.length, heap, false);
+						map.get(e.target).pindex = r.index;				//min path is my daddy
+					}
+				}
+				
+				r.visited = true;
+				if(r.visitedR == true) {				//stop when a node has been processed from both ends
+					result = r.dist + r.distR;
+					break;					
+				}
+					
+			}
+			
+			if(!heapR.isEmpty()) {						//process the next node in the reverse graph
+				Node rr = getMin(heapR);
+				
+				for(Edge er : graphR.get(rr.index)) {
+					
+					if(rr.distR == Long.MAX_VALUE)
+						break;
+					
+					if(map.get(er.target).distR > rr.distR + er.length) {
+						decreaseKey(er.target, rr.distR + er.length, heapR, true);
+						map.get(er.target).pindex = rr.index;
+					}	
+				}
+				rr.visitedR = true;
+				if(rr.visited == true) {
+					result = rr.dist + rr.distR;
+					break;
+				}
+			}
+			
+		}
+		
+		return result;
+    }
+
+}
+
+
+
 
 public class FriendSuggestion {
-    private static class Impl {
-        // Number of nodes
-        int n;
-        // adj[0] and cost[0] store the initial graph, adj[1] and cost[1] store the reversed graph.
-        // Each graph is stored as array of adjacency lists for each node. adj stores the edges,
-        // and cost stores their costs.
-        ArrayList<Integer>[][] adj;
-        ArrayList<Integer>[][] cost;
-        // distance[0] and distance[1] correspond to distance estimates in the forward and backward searches.
-        Long[][] distance;
-        // Two priority queues, one for forward and one for backward search.
-        ArrayList<PriorityQueue<Entry>> queue;
-        // visited[v] == true iff v was visited either by forward or backward search.
-        boolean[] visited;
-        // List of all the nodes which were visited either by forward or backward search.
-        ArrayList<Integer> workset;
-        final Long INFINITY = Long.MAX_VALUE / 4;
 
-        Impl(int n) {
-            this.n = n;
-            visited = new boolean[n];
-            Arrays.fill(visited, false);
-            workset = new ArrayList<Integer>();
-            distance = new Long[][] {new Long[n], new Long[n]};
-            for (int i = 0; i < n; ++i) {
-                distance[0][i] = distance[1][i] = INFINITY;
-            }
-            queue = new ArrayList<PriorityQueue<Entry>>();
-            queue.add(new PriorityQueue<Entry>(n));
-            queue.add(new PriorityQueue<Entry>(n));
-        }
-
-        // Reinitialize the data structures before new query after the previous query
-        void clear() {
-            for (int v : workset) {
-                distance[0][v] = distance[1][v] = INFINITY;
-                visited[v] = false;
-            }
-            workset.clear();
-            queue.get(0).clear();
-            queue.get(1).clear();
-        }
-
-        // Try to relax the distance from direction side to node v using value dist.
-        void visit(int side, int v, Long dist) {
-            // Implement this method yourself
-        }
-
-        // Returns the distance from s to t in the graph.
-        Long query(int s, int t) {
-            clear();
-            visit(0, s, 0L);
-            visit(1, t, 0L);
-            // Implement the rest of the algorithm yourself
- 
-            return -1L;
-        }
-
-        class Entry implements Comparable<Entry>
-        {
-            Long cost;
-            int node;
-          
-            public Entry(Long cost, int node)
-            {
-                this.cost = cost;
-                this.node = node;
-            }
-         
-            public int compareTo(Entry other)
-            {
-                return cost < other.cost ? -1 : cost > other.cost ? 1 : 0;
-            }
-        }
-    }
 
     public static void main(String args[]) {
         Scanner in = new Scanner(System.in);
         int n = in.nextInt();
         int m = in.nextInt();
-        Impl bidij = new Impl(n);
-        bidij.adj = (ArrayList<Integer>[][])new ArrayList[2][];
-        bidij.cost = (ArrayList<Integer>[][])new ArrayList[2][];
-        for (int side = 0; side < 2; ++side) {
-            bidij.adj[side] = (ArrayList<Integer>[])new ArrayList[n];
-            bidij.cost[side] = (ArrayList<Integer>[])new ArrayList[n];
-            for (int i = 0; i < n; i++) {
-                bidij.adj[side][i] = new ArrayList<Integer>();
-                bidij.cost[side][i] = new ArrayList<Integer>();
-            }
-        }
+        
+        BiGraph g = new BiGraph(n);
 
         for (int i = 0; i < m; i++) {
             int x, y, c;
             x = in.nextInt();
             y = in.nextInt();
             c = in.nextInt();
-            bidij.adj[0][x - 1].add(y - 1);
-            bidij.cost[0][x - 1].add(c);
-            bidij.adj[1][y - 1].add(x - 1);
-            bidij.cost[1][y - 1].add(c);
+            
+            
+            g.addEdges(x, y, c);
+            
+
         }
 
         int t = in.nextInt();
@@ -113,7 +264,10 @@ public class FriendSuggestion {
             int u, v;
             u = in.nextInt();
             v = in.nextInt();
-            System.out.println(bidij.query(u-1, v-1));
+            
+            
+            System.out.println(g.biDijkstra(u-1, v-1));
+            in.close();
         }
     }
 }
