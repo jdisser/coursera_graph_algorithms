@@ -39,11 +39,7 @@ class BiGraph {
 	public ArrayList<Node> heap;					//priority queue with method to update key values
 	public ArrayList<Node> heapR;					//priority queue for reversed graph
 	public ArrayList<Node> map;						//returns Nodes by vertex (index)
-	public ArrayList<Edge> edges;					//copy of original data for multiple queries
-	public ArrayList<Edge> edgesR;
-	
-	//TODO: implement copies of the heaps to restore them for each query
-	
+
 	
 	public int root;
 	public int n;
@@ -95,6 +91,9 @@ class BiGraph {
 	
 	public void addEdges(int x, int y, int c) {		//(source, target, length)
 
+		x -= 1;
+		y -= 1;								//raw vertexes are 1 based, map indices are 0 based
+		
 		Edge e = new Edge(x, y, c);
         Edge er = new Edge(y, x, c);
 
@@ -170,7 +169,7 @@ class BiGraph {
 	
 	private void decreaseKey(int i, long d, ArrayList<Node> h, boolean reverse) {
 		
-//		System.out.println(" decreaseKey i: " + i + " d: " + d);
+		System.out.println(" decreaseKey i: " + i + " d: " + d + " reverse: " + reverse);
 		Node dn = map.get(i);
 		if(reverse) {
 			dn.distR = d;
@@ -225,6 +224,7 @@ class BiGraph {
 					}
 				}
 				
+				//TODO: handle the case where friends are only reachable in one direction (distx = infinity)
 				r.visited = true;
 				if(r.visitedR == true) {				//stop when a node has been processed from both ends
 					result = r.dist + r.distR;
@@ -278,7 +278,8 @@ public class FriendSuggestion {
             x = in.nextInt();
             y = in.nextInt();
             c = in.nextInt();
-          
+
+
             g.addEdges(x, y, c);         
 
         }
@@ -286,14 +287,15 @@ public class FriendSuggestion {
 
         int t = in.nextInt();
 
+        
+        //TODO: determine if the output should print after each pair or all together after the last pair
         for (int i = 0; i < t; i++) {
             int u, v;
             u = in.nextInt();
             v = in.nextInt();
-            
-            
+          
             System.out.println(g.biDijkstra(u-1, v-1));
-            in.close();
         }
+        in.close();
     }
 }
