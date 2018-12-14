@@ -73,7 +73,7 @@ class BiGraph {
         
         this.working = new HashSet<Node>();
         
-        for (int i = 0; i < n; i++) {
+        for (int i = 0; i < n; i++) {					//graph indexes and nodes are 0 indexed
         	
             this.graph.add(new ArrayList<Edge>());
             this.graphR.add(new ArrayList<Edge>());
@@ -134,9 +134,9 @@ class BiGraph {
 		//e = target nodes in columns c+1 & c-1 +/-e and at same height (e <= k/2)
 		//distance between a node in the first column (i <= k) and the node at the same height in the last column (ii = i + (c-1)*k) is c -1
 		//let l(e) = 2e + 1
-		//then the number of nodes processed is 2( l(e) + 2l(e)^2 + l(e)^3) for c=5 
-		//for c=5, k=8, e=2 nodes processed are 2( 5 + 2*25 + 125) ~ 360
-		//for c=5, k=30 it's 2(30 + 2*900 + 27000) ~ 58000
+		//then the number of edges processed is < 2( l(e) + 2l(e)^2 + l(e)^3) for c=5 
+		//for c=5, k=8, e=2 nodes processed are 2( 5 + 2*25 + 125) < 360
+		//for c=5, k=30 it's 2(30 + 2*900 + 27000) < 58000
 		
 		System.out.println("generating test edges...");
 		
@@ -257,7 +257,7 @@ class BiGraph {
 	
 	private void decreaseKey(int i, long d, ArrayList<Node> h) {
 		
-		System.out.println(" decreaseKey i: " + i + " d: " + d);
+//		System.out.println(" decreaseKey i: " + i + " d: " + d);
 		Node dn = map.get(i);
 		if(h == heapR) {
 			dn.distR = d;
@@ -277,10 +277,13 @@ class BiGraph {
     	
     }
 	
-	public long biDijkstra(int s, int t) {
+	public long biDijkstra(int s, int t) {	//s & t are 0 indexed
 		
 		//implements meet in the middle bidirectional Dijkstra's algorithm
 
+		long start = System.nanoTime();
+		
+		int processed = 0;
 		
 		initializeQueues();
 		
@@ -315,13 +318,13 @@ class BiGraph {
 					Node tt = map.get(e.target);
 					
 					working.add(tt);				
-					enQueue(tt.index, heap);
-					
 					
 					if(tt.dist > r.dist + e.length) {
+						enQueue(tt.index, heap);
 						decreaseKey(tt.index, r.dist + e.length, heap);
 						tt.pindex = r.index;				//min path is my daddy
 					}
+					++processed;
 				}
 				
 				
@@ -335,7 +338,10 @@ class BiGraph {
 			}
 			
 			if(!heapR.isEmpty()) {						//process the next node in the reverse graph
+				
 				Node rr = getMin(heapR);
+				
+//				System.out.println("processing Node: " + rr.index);
 				
 				for(Edge er : graphR.get(rr.index)) {
 					
@@ -345,12 +351,14 @@ class BiGraph {
 					Node ttr = map.get(er.target);
 					
 					working.add(ttr);
-					enQueue(ttr.index, heapR);
+					
 					
 					if(ttr.distR > rr.distR + er.length) {
+						enQueue(ttr.index, heapR);
 						decreaseKey(ttr.index, rr.distR + er.length, heapR);
 						ttr.pindex = rr.index;
-					}	
+					}
+					++processed;
 				}
 				rr.visitedR = true;
 				if(rr.visited == true) {
@@ -360,7 +368,9 @@ class BiGraph {
 			}
 			
 		}
-		
+//		long finish = System.nanoTime();
+//		long elapsed = (finish - start) / 1000000;
+//		System.out.println("BiDijkstra processed edges: " + processed + " ms: " + elapsed);
 		return result;
     }
 
@@ -378,8 +388,38 @@ public class FriendSuggestion {
     public static void main(String args[]) {
     	
     	if(args[0].equals("test")) {
-    		BiGraph g = new BiGraph(40);
-    		g.genTestEdges(5,8,2);			//c,k,e
+
+    		
+    		int c = 5;
+    		int k = 10000;
+    		int e = 10;
+    		
+    		BiGraph g = new BiGraph(c*k);
+    		
+    		long start = System.nanoTime();
+    		g.genTestEdges(c,k,e);			//see function for description of parameters
+    		long finish = System.nanoTime();
+    		long elapsed = (finish - start)/1000000;
+    		
+    		System.out.println("Edge generation time: " + elapsed + " ms" );
+    		
+    		start = System.nanoTime();
+    		
+    		for(int i = 100; i < 111; ++i) {
+    			long d = g.biDijkstra(i, i + (c-1)*k);
+    			System.out.println("i: " + i + " d: " + d);
+    		}
+    		
+    		finish = System.nanoTime();
+    		elapsed = (finish - start) / 1000000;
+    		
+    		System.out.println("Query time: " + elapsed + " ms" );
+    		
+    		
+    		//TODO: run a series of queries
+    		//TODO: Print the time it takes for each query and total (including reseting and edge generation)
+    		
+    		
     	} else {
     		Scanner in = new Scanner(System.in);
             int n = in.nextInt();
