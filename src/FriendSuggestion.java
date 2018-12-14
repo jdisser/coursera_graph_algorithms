@@ -126,6 +126,45 @@ class BiGraph {
 	}
 
 	
+	public void genTestEdges(int c, int k, int e) {
+		//assumes that a graph and graphR of size c*k exists
+		//generates a grid of nodes
+		//c = # columns
+		//k = # nodes in column
+		//e = target nodes in columns c+1 & c-1 +/-e and at same height (e <= k/2)
+		//distance between a node in the first column (i <= k) and the node at the same height in the last column (ii = i + (c-1)*k) is c -1
+		//let l(e) = 2e + 1
+		//then the number of nodes processed is 2( l(e) + 2l(e)^2 + l(e)^3) for c=5 
+		//for c=5, k=8, e=2 nodes processed are 2( 5 + 2*25 + 125) ~ 360
+		//for c=5, k=30 it's 2(30 + 2*900 + 27000) ~ 58000
+		
+		int edges = 0;
+		
+		//generate the forward facing edges
+		for(int i = 1; i <= (c-1)*k - e; ++i) {					//the parameters are index 1 based
+			addEdges(i-1, i-1 + k, 1);							//the edges are index 0 based so i -> i-1
+			for(int j = 1; j<= e; ++j) {
+				addEdges(i-1, i-1 + (k+j), 1);
+				addEdges(i-1, i-1 + (k-j), 1);
+			}
+			edges += 2*e + 1;
+		}
+		
+		//generate the backward facing edges
+		for(int i = c*k; i > k - e; --i) {
+			addEdges(i-1, i-1 - k, 1);
+			for(int j = 1; j <= e; ++j) {
+				addEdges(i-1, i-1 - (k-e), 1);
+				addEdges(i-1, i-1 - (k+e), 1);
+			}
+			edges += 2*e + 1;
+		}
+		
+		System.out.println("generated test edges: " + edges);
+		
+		
+	}
+	
 	
 	private void minSiftDown(int i, ArrayList<Node> h) {
 		
