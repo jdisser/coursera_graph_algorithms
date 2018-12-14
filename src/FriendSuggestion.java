@@ -289,11 +289,16 @@ class BiGraph {
 		
 		resetWorkingNodes();
 		
+		Node target = map.get(t);
+		
 		enQueue(s, heap);
 		enQueue(t, heapR);
 		
 		decreaseKey(s, 0, heap);			//start the algorithm on this node in the forward direction
 		decreaseKey(t, 0, heapR);			//and from this one in the reverse direction (Reverse Graph => heapR)
+		
+		long middle = -1;
+		long direct = -1;
 		
 		long result = -1;						//if after processing all nodes in the graph this is unchanged the target is unreachable
 		
@@ -331,7 +336,13 @@ class BiGraph {
 				r.visited = true;
 				
 				if(r.visitedR == true) {				//stop when a node has been processed from both ends
-					result = r.dist + r.distR;
+					
+					//check for the case where this forward search reaches the target and compare distances
+					
+					middle = r.dist + r.distR;	//this is the distance for meet in the middle
+					direct = target.dist;
+					
+					result = Math.min(middle, direct);
 					break;					
 				}
 					
@@ -362,7 +373,10 @@ class BiGraph {
 				}
 				rr.visitedR = true;
 				if(rr.visited == true) {
-					result = rr.dist + rr.distR;
+					middle = rr.dist + rr.distR;	//this is the distance for meet in the middle
+					direct = target.dist;
+					
+					result = Math.min(middle, direct);
 					break;
 				}
 			}
