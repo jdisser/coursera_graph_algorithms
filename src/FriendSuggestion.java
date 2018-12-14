@@ -138,24 +138,26 @@ class BiGraph {
 		//for c=5, k=8, e=2 nodes processed are 2( 5 + 2*25 + 125) ~ 360
 		//for c=5, k=30 it's 2(30 + 2*900 + 27000) ~ 58000
 		
+		System.out.println("generating test edges...");
+		
 		int edges = 0;
 		
 		//generate the forward facing edges
-		for(int i = 1; i <= (c-1)*k - e; ++i) {					//the parameters are index 1 based
-			addEdges(i-1, i-1 + k, 1);							//the edges are index 0 based so i -> i-1
+		for(int i = 1; i <= (c-1)*k - e; ++i) {					//the parameters are index 1 based like the scanned input
+			addEdges(i, i + k, 1);							
 			for(int j = 1; j<= e; ++j) {
-				addEdges(i-1, i-1 + (k+j), 1);
-				addEdges(i-1, i-1 + (k-j), 1);
+				addEdges(i, i + (k+j), 1);
+				addEdges(i, i + (k-j), 1);
 			}
 			edges += 2*e + 1;
 		}
 		
 		//generate the backward facing edges
-		for(int i = c*k; i > k - e; --i) {
-			addEdges(i-1, i-1 - k, 1);
+		for(int i = c*k; i > k + e; --i) {
+			addEdges(i, i - k, 1);
 			for(int j = 1; j <= e; ++j) {
-				addEdges(i-1, i-1 - (k-e), 1);
-				addEdges(i-1, i-1 - (k+e), 1);
+				addEdges(i, i - (k-e), 1);
+				addEdges(i, i - (k+e), 1);
 			}
 			edges += 2*e + 1;
 		}
@@ -370,42 +372,47 @@ class BiGraph {
 public class FriendSuggestion {
 
 
-	//TODO: add a test graph generator per notes
+
 	
 	
     public static void main(String args[]) {
     	
-    
+    	if(args[0].equals("test")) {
+    		BiGraph g = new BiGraph(40);
+    		g.genTestEdges(5,8,2);			//c,k,e
+    	} else {
+    		Scanner in = new Scanner(System.in);
+            int n = in.nextInt();
+            int m = in.nextInt();
+            
+            BiGraph g = new BiGraph(n);
+
+            for (int i = 0; i < m; i++) {
+                int x, y, c;
+                x = in.nextInt();
+                y = in.nextInt();
+                c = in.nextInt();
+
+
+                g.addEdges(x, y, c);    //edges are added as 1 indexed     
+
+            }
+            
+
+            int t = in.nextInt();
+
+            
+            //TODO: determine if the output should print after each pair or all together after the last pair
+            for (int i = 0; i < t; i++) {
+                int u, v;
+                u = in.nextInt();
+                v = in.nextInt();
+              
+                System.out.println(g.biDijkstra(u-1, v-1));
+            }
+            in.close();
+    	}
     	
-        Scanner in = new Scanner(System.in);
-        int n = in.nextInt();
-        int m = in.nextInt();
         
-        BiGraph g = new BiGraph(n);
-
-        for (int i = 0; i < m; i++) {
-            int x, y, c;
-            x = in.nextInt();
-            y = in.nextInt();
-            c = in.nextInt();
-
-
-            g.addEdges(x, y, c);         
-
-        }
-        
-
-        int t = in.nextInt();
-
-        
-        //TODO: determine if the output should print after each pair or all together after the last pair
-        for (int i = 0; i < t; i++) {
-            int u, v;
-            u = in.nextInt();
-            v = in.nextInt();
-          
-            System.out.println(g.biDijkstra(u-1, v-1));
-        }
-        in.close();
     }
 }
