@@ -1,8 +1,10 @@
 import java.util.Scanner;
 import java.util.ArrayList;
+import java.util.HashSet;
 
 
 class Node {
+	private static final long INFINITY = Long.MAX_VALUE/4;
 	public int index;
 	public long dist;			//this is the distance from the source in the graph
 	public long distR;			//this is the distance from the target in the reverse graph
@@ -12,12 +14,21 @@ class Node {
 	
 	public Node(int i) {
         this.index = i;
-        this.dist = Long.MAX_VALUE;
-        this.distR = Long.MAX_VALUE;
+        this.dist = INFINITY;
+        this.distR = INFINITY;
         this.visited = false;
         this.visitedR = false;
         this.pindex = -1;
 	}
+	
+	public void resetNode() {
+		this.dist = INFINITY;
+        this.distR = INFINITY;
+        this.visited = false;
+        this.visitedR = false;
+	}
+	
+	
 }
 
 class Edge {
@@ -39,6 +50,10 @@ class BiGraph {
 	public ArrayList<Node> heap;					//priority queue with method to update key values
 	public ArrayList<Node> heapR;					//priority queue for reversed graph
 	public ArrayList<Node> map;						//returns Nodes by vertex (index)
+	public HashSet<Node> working;					//all nodes processed by query that must be reset
+	
+	public final long INFINITY = Long.MAX_VALUE / 4;
+
 
 	
 	public int root;
@@ -55,6 +70,8 @@ class BiGraph {
         this.heapR = new ArrayList<Node>();
         
         this.map = new ArrayList<Node>();
+        
+        this.working = new HashSet<Node>();
         
         for (int i = 0; i < n; i++) {
         	
@@ -74,34 +91,40 @@ class BiGraph {
 		heap.clear();
 		heapR.clear();
 		
-		for(Node n : map) {
-			n.dist = Long.MAX_VALUE;
-			n.distR = Long.MAX_VALUE;
-			n.visited = false;
-			n.visitedR = false;
-			n.pindex = -1;
-			
-            heap.add(n);			//was (n.index, n)
-            heapR.add(n);
-
-			
+	}
+	
+	public void resetWorkingNodes() {
+		if(!working.isEmpty()) {
+			for(Node n: working) {
+				n.resetNode();
+			}
 		}
 	}
 	
-	
-	public void addEdges(int x, int y, int c) {		//(source, target, length)
-
-		x -= 1;
-		y -= 1;								//raw vertexes are 1 based, map indices are 0 based
+	public void enQueue(int v, ArrayList<Node> h) {
 		
-		Edge e = new Edge(x, y, c);
-        Edge er = new Edge(y, x, c);
-
-        graph.get(x).add(e);
-		graphR.get(y).add(er);
-
+		int end = h.size();
+		Node n = map.get(v);
+		h.add(end, n);
+		minSiftUp(end, h);
+		working.add(n);
+		
 	}
 	
+	
+	public void addEdges(int s, int t, int c) {		//(source, target, length in 1 based indexing)
+
+		s -= 1;
+		t -= 1;								//raw vertexes are 1 based, map indices are 0 based
+		
+		Edge e = new Edge(s, t, c);
+        Edge er = new Edge(t, s, c);
+
+        graph.get(s).add(e);
+		graphR.get(t).add(er);
+
+	}
+
 	
 	
 	private void minSiftDown(int i, ArrayList<Node> h) {
@@ -115,16 +138,33 @@ class BiGraph {
     	int li = h.size() - 1;	//0 based last index
     	int left = 2*i + 1;
     	int rght = 2*i + 2;
-    	if(left <= li && h.get(left).dist < h.get(mini).dist) {
-    		mini = left;
+    	
+    	if(h == heap) {
+    		if(left <= li && h.get(left).dist < h.get(mini).dist) {
+        		mini = left;
+        	}
+        	if(rght <= li && h.get(rght).dist < h.get(mini).dist) {
+        		mini = rght;
+        	}
+        	if(mini != i) {
+    	   		swap(i, mini, h);
+    	   		minSiftDown(mini, h);
+        	}
+    	} else {
+    		if(left <= li && h.get(left).distR < h.get(mini).distR) {
+        		mini = left;
+        	}
+        	if(rght <= li && h.get(rght).distR < h.get(mini).distR) {
+        		mini = rght;
+        	}
+        	if(mini != i) {
+    	   		swap(i, mini, h);
+    	   		minSiftDown(mini, h);
+        	}
     	}
-    	if(rght <= li && h.get(rght).dist < h.get(mini).dist) {
-    		mini = rght;
-    	}
-    	if(mini != i) {
-	   		swap(i, mini, h);
-	   		minSiftDown(mini, h);
-    	}
+    	
+    	
+    	
    		
     }
 	
@@ -147,11 +187,18 @@ class BiGraph {
 			pi = (i - 1)/2;
 			
 //			System.out.println(" minSiftUp pi: " + pi);
-			
-			if(h.get(pi).dist > h.get(i).dist) {
-				swap(pi, i, h);
-				minSiftUp(pi, h);
+			if(h == heap) {
+				if(h.get(pi).dist > h.get(i).dist) {
+					swap(pi, i, h);
+					minSiftUp(pi, h);
+				}
+			} else {
+				if(h.get(pi).distR > h.get(i).distR) {
+					swap(pi, i, h);
+					minSiftUp(pi, h);
+				}
 			}
+			
 			
 		}
 
@@ -167,11 +214,11 @@ class BiGraph {
 		return nm;
 	}
 	
-	private void decreaseKey(int i, long d, ArrayList<Node> h, boolean reverse) {
+	private void decreaseKey(int i, long d, ArrayList<Node> h) {
 		
-		System.out.println(" decreaseKey i: " + i + " d: " + d + " reverse: " + reverse);
+		System.out.println(" decreaseKey i: " + i + " d: " + d);
 		Node dn = map.get(i);
-		if(reverse) {
+		if(h == heapR) {
 			dn.distR = d;
 		} else {
 			dn.dist = d;
@@ -191,12 +238,18 @@ class BiGraph {
 	
 	public long biDijkstra(int s, int t) {
 		
-		//implements Dijkstra's algorithm
+		//implements meet in the middle bidirectional Dijkstra's algorithm
 
+		
 		initializeQueues();
 		
-		decreaseKey(s, 0, heap, false);			//start the algorithm on this node in the forward direction
-		decreaseKey(t, 0, heapR, true);			//and from this one in the reverse direction (Reverse Graph => true)
+		resetWorkingNodes();
+		
+		enQueue(s, heap);
+		enQueue(t, heapR);
+		
+		decreaseKey(s, 0, heap);			//start the algorithm on this node in the forward direction
+		decreaseKey(t, 0, heapR);			//and from this one in the reverse direction (Reverse Graph => heapR)
 		
 		long result = -1;						//if after processing all nodes in the graph this is unchanged the target is unreachable
 		
@@ -215,17 +268,24 @@ class BiGraph {
 
 				for(Edge e : graph.get(r.index)) {
 					
-					if(r.dist == Long.MAX_VALUE)		//this is an unreachable node if it's dist is infinite
+					if(r.dist == INFINITY)		//this is an unreachable node if it's dist is infinite
 						break;
 					
-					if(map.get(e.target).dist > r.dist + e.length) {
-						decreaseKey(e.target, r.dist + e.length, heap, false);
-						map.get(e.target).pindex = r.index;				//min path is my daddy
+					Node tt = map.get(e.target);
+					
+					working.add(tt);				
+					enQueue(tt.index, heap);
+					
+					
+					if(tt.dist > r.dist + e.length) {
+						decreaseKey(tt.index, r.dist + e.length, heap);
+						tt.pindex = r.index;				//min path is my daddy
 					}
 				}
 				
-				//TODO: handle the case where friends are only reachable in one direction (distx = infinity)
+				
 				r.visited = true;
+				
 				if(r.visitedR == true) {				//stop when a node has been processed from both ends
 					result = r.dist + r.distR;
 					break;					
@@ -238,12 +298,17 @@ class BiGraph {
 				
 				for(Edge er : graphR.get(rr.index)) {
 					
-					if(rr.distR == Long.MAX_VALUE)
+					if(rr.distR == INFINITY)
 						break;
 					
-					if(map.get(er.target).distR > rr.distR + er.length) {
-						decreaseKey(er.target, rr.distR + er.length, heapR, true);
-						map.get(er.target).pindex = rr.index;
+					Node ttr = map.get(er.target);
+					
+					working.add(ttr);
+					enQueue(ttr.index, heapR);
+					
+					if(ttr.distR > rr.distR + er.length) {
+						decreaseKey(ttr.index, rr.distR + er.length, heapR);
+						ttr.pindex = rr.index;
 					}	
 				}
 				rr.visitedR = true;
@@ -266,7 +331,13 @@ class BiGraph {
 public class FriendSuggestion {
 
 
+	//TODO: add a test graph generator per notes
+	
+	
     public static void main(String args[]) {
+    	
+    
+    	
         Scanner in = new Scanner(System.in);
         int n = in.nextInt();
         int m = in.nextInt();
