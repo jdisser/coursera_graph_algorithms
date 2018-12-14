@@ -387,12 +387,12 @@ public class FriendSuggestion {
 	
     public static void main(String args[]) {
     	
-    	if(args[0].equals("test")) {
+    	if(args.length != 0) {
 
     		
     		int c = 5;
-    		int k = 10000;
-    		int e = 10;
+    		int k = 100000;
+    		int e = 3;
     		
     		BiGraph g = new BiGraph(c*k);
     		
