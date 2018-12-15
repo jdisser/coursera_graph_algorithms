@@ -276,6 +276,16 @@ class BiGraph {
     	h.set(n, tn);
     	
     }
+    
+    private long shortestPath() {
+    	long d = INFINITY;
+    	long dn = 0;
+    	for(Node n: working) {
+    		dn = n.dist + n.distR;
+    		d = Math.min(d, dn);
+    	}
+    	return d;
+    }
 	
 	public long biDijkstra(int s, int t) {	//s & t are 0 indexed
 		
@@ -289,7 +299,7 @@ class BiGraph {
 		
 		resetWorkingNodes();
 		
-		Node target = map.get(t);
+
 		
 		enQueue(s, heap);
 		enQueue(t, heapR);
@@ -297,8 +307,9 @@ class BiGraph {
 		decreaseKey(s, 0, heap);			//start the algorithm on this node in the forward direction
 		decreaseKey(t, 0, heapR);			//and from this one in the reverse direction (Reverse Graph => heapR)
 		
-		long middle = -1;
-		long direct = -1;
+		working.add(map.get(s));			//add the initial nodes to the working set
+		working.add(map.get(t));
+		
 		
 		long result = -1;						//if after processing all nodes in the graph this is unchanged the target is unreachable
 		
@@ -322,9 +333,10 @@ class BiGraph {
 					
 					Node tt = map.get(e.target);
 					
-					working.add(tt);				
+									
 					
 					if(tt.dist > r.dist + e.length) {
+						working.add(tt);							//add nodes to the working set when relaxed
 						enQueue(tt.index, heap);
 						decreaseKey(tt.index, r.dist + e.length, heap);
 						tt.pindex = r.index;				//min path is my daddy
@@ -338,11 +350,10 @@ class BiGraph {
 				if(r.visitedR == true) {				//stop when a node has been processed from both ends
 					
 					//check for the case where this forward search reaches the target and compare distances
+					//TODO: see below
 					
-					middle = r.dist + r.distR;	//this is the distance for meet in the middle
-					direct = target.dist;
+					result = shortestPath();
 					
-					result = Math.min(middle, direct);
 					break;					
 				}
 					
@@ -361,10 +372,11 @@ class BiGraph {
 					
 					Node ttr = map.get(er.target);
 					
-					working.add(ttr);
+					
 					
 					
 					if(ttr.distR > rr.distR + er.length) {
+						working.add(ttr);									//TODO: confirm that this should be here and not outside the if
 						enQueue(ttr.index, heapR);
 						decreaseKey(ttr.index, rr.distR + er.length, heapR);
 						ttr.pindex = rr.index;
@@ -373,10 +385,10 @@ class BiGraph {
 				}
 				rr.visitedR = true;
 				if(rr.visited == true) {
-					middle = rr.dist + rr.distR;	//this is the distance for meet in the middle
-					direct = target.dist;
 					
-					result = Math.min(middle, direct);
+					//TODO: implement the search in the working set for the node with the least distance here (and in the G graph)
+					result = shortestPath();
+
 					break;
 				}
 			}
