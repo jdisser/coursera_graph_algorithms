@@ -98,6 +98,7 @@ class BiGraph {
 			for(Node n: working) {
 				n.resetNode();
 			}
+			working.clear();
 		}
 	}
 	
