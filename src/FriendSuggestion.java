@@ -333,7 +333,7 @@ class BiGraph {
 							working.add(tt);
 							tt.dist = r.dist + e.length;
 							enQueue(tt, heap);
-//							decreaseKey(tt.index, r.dist + e.length, heap);
+
 						
 //						tt.pindex = r.index;				//min path is my daddy
 					}
@@ -364,7 +364,7 @@ class BiGraph {
 							working.add(ttr);
 							ttr.distR = rr.distR + er.length;
 							enQueue(ttr, heapR);
-//							decreaseKey(ttr.index, rr.distR + er.length, heapR);
+
 						
 //						ttr.pindex = rr.index;
 					}
