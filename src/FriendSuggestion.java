@@ -107,7 +107,7 @@ class BiGraph {
 		Node n = map.get(v);
 		h.add(end, n);
 		minSiftUp(end, h);
-		working.add(n);
+//		working.add(n);
 		
 	}
 	
@@ -291,9 +291,9 @@ class BiGraph {
 		
 		//implements meet in the middle bidirectional Dijkstra's algorithm
 
-		long start = System.nanoTime();
+//		long start = System.nanoTime();
 		
-		int processed = 0;
+//		int processed = 0;
 		
 		initializeQueues();
 		
@@ -304,10 +304,10 @@ class BiGraph {
 		enQueue(s, heap);
 		enQueue(t, heapR);
 		
-		decreaseKey(s, 0, heap);			//start the algorithm on this node in the forward direction
-		decreaseKey(t, 0, heapR);			//and from this one in the reverse direction (Reverse Graph => heapR)
+		decreaseKey(s, 0, heap);				//start the algorithm on this node in the forward direction
+		decreaseKey(t, 0, heapR);				//and from this one in the reverse direction (Reverse Graph => heapR)
 		
-		working.add(map.get(s));			//add the initial nodes to the working set
+		working.add(map.get(s));				//add the initial nodes to the working set
 		working.add(map.get(t));
 		
 		
@@ -318,42 +318,30 @@ class BiGraph {
 		}
 		
 		while(!heap.isEmpty() || !heapR.isEmpty()) {
-			
-			
+	
 			if(!heap.isEmpty()) {						//process the next node in the forward graph
 				
 				Node r = getMin(heap);
-
 //				System.out.println("processing Node: " + r.index);
-
 				for(Edge e : graph.get(r.index)) {
 					
-					if(r.dist == INFINITY)		//this is an unreachable node if it's dist is infinite
-						break;
-					
 					Node tt = map.get(e.target);
-					
-									
-					
+				
 					if(tt.dist > r.dist + e.length) {
-						working.add(tt);							//add nodes to the working set when relaxed
-						enQueue(tt.index, heap);
-						decreaseKey(tt.index, r.dist + e.length, heap);
-						tt.pindex = r.index;				//min path is my daddy
+
+							working.add(tt);
+							enQueue(tt.index, heap);
+							decreaseKey(tt.index, r.dist + e.length, heap);
+						
+//						tt.pindex = r.index;				//min path is my daddy
 					}
-					++processed;
+//					++processed;
 				}
-				
-				
+		
 				r.visited = true;
-				
 				if(r.visitedR == true) {				//stop when a node has been processed from both ends
-					
-					//check for the case where this forward search reaches the target and compare distances
-					//TODO: see below
-					
+				
 					result = shortestPath();
-					
 					break;					
 				}
 					
@@ -361,34 +349,28 @@ class BiGraph {
 			
 			if(!heapR.isEmpty()) {						//process the next node in the reverse graph
 				
-				Node rr = getMin(heapR);
-				
+				Node rr = getMin(heapR);	
 //				System.out.println("processing Node: " + rr.index);
 				
 				for(Edge er : graphR.get(rr.index)) {
 					
-					if(rr.distR == INFINITY)
-						break;
-					
 					Node ttr = map.get(er.target);
-					
-					
-					
-					
+				
 					if(ttr.distR > rr.distR + er.length) {
-						working.add(ttr);									//TODO: confirm that this should be here and not outside the if
-						enQueue(ttr.index, heapR);
-						decreaseKey(ttr.index, rr.distR + er.length, heapR);
-						ttr.pindex = rr.index;
+															
+
+							working.add(ttr);
+							enQueue(ttr.index, heapR);
+							decreaseKey(ttr.index, rr.distR + er.length, heapR);
+						
+//						ttr.pindex = rr.index;
 					}
-					++processed;
+//					++processed;
 				}
 				rr.visitedR = true;
 				if(rr.visited == true) {
-					
-					//TODO: implement the search in the working set for the node with the least distance here (and in the G graph)
+				
 					result = shortestPath();
-
 					break;
 				}
 			}
@@ -407,10 +389,6 @@ class BiGraph {
 
 public class FriendSuggestion {
 
-
-
-	
-	
     public static void main(String args[]) {
     	
     	if(args.length != 0) {
@@ -442,8 +420,6 @@ public class FriendSuggestion {
     		System.out.println("Query time: " + elapsed + " ms" );
     		
     		
-    		//TODO: run a series of queries
-    		//TODO: Print the time it takes for each query and total (including reseting and edge generation)
     		
     		
     	} else {
@@ -468,7 +444,7 @@ public class FriendSuggestion {
             int t = in.nextInt();
 
             
-            //TODO: determine if the output should print after each pair or all together after the last pair
+            
             for (int i = 0; i < t; i++) {
                 int u, v;
                 u = in.nextInt();
