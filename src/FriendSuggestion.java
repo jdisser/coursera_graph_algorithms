@@ -101,10 +101,9 @@ class BiGraph {
 		}
 	}
 	
-	public void enQueue(int v, ArrayList<Node> h) {
+	public void enQueue(Node n, ArrayList<Node> h) {
 		
 		int end = h.size();
-		Node n = map.get(v);
 		h.add(end, n);
 		minSiftUp(end, h);
 //		working.add(n);
@@ -299,16 +298,17 @@ class BiGraph {
 		
 		resetWorkingNodes();
 		
-
+		Node sn = map.get(s);
+		Node tn = map.get(t);
 		
-		enQueue(s, heap);
-		enQueue(t, heapR);
+		enQueue(sn, heap);
+		enQueue(tn, heapR);
 		
 		decreaseKey(s, 0, heap);				//start the algorithm on this node in the forward direction
 		decreaseKey(t, 0, heapR);				//and from this one in the reverse direction (Reverse Graph => heapR)
 		
-		working.add(map.get(s));				//add the initial nodes to the working set
-		working.add(map.get(t));
+		working.add(sn);				//add the initial nodes to the working set
+		working.add(tn);
 		
 		
 		long result = -1;						//if after processing all nodes in the graph this is unchanged the target is unreachable
@@ -331,7 +331,7 @@ class BiGraph {
 
 							working.add(tt);
 							tt.dist = r.dist + e.length;
-							enQueue(tt.index, heap);
+							enQueue(tt, heap);
 //							decreaseKey(tt.index, r.dist + e.length, heap);
 						
 //						tt.pindex = r.index;				//min path is my daddy
@@ -362,7 +362,7 @@ class BiGraph {
 
 							working.add(ttr);
 							ttr.distR = rr.distR + er.length;
-							enQueue(ttr.index, heapR);
+							enQueue(ttr, heapR);
 //							decreaseKey(ttr.index, rr.distR + er.length, heapR);
 						
 //						ttr.pindex = rr.index;
