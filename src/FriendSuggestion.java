@@ -330,8 +330,9 @@ class BiGraph {
 					if(tt.dist > r.dist + e.length) {
 
 							working.add(tt);
+							tt.dist = r.dist + e.length;
 							enQueue(tt.index, heap);
-							decreaseKey(tt.index, r.dist + e.length, heap);
+//							decreaseKey(tt.index, r.dist + e.length, heap);
 						
 //						tt.pindex = r.index;				//min path is my daddy
 					}
@@ -360,8 +361,9 @@ class BiGraph {
 															
 
 							working.add(ttr);
+							ttr.distR = rr.distR + er.length;
 							enQueue(ttr.index, heapR);
-							decreaseKey(ttr.index, rr.distR + er.length, heapR);
+//							decreaseKey(ttr.index, rr.distR + er.length, heapR);
 						
 //						ttr.pindex = rr.index;
 					}
