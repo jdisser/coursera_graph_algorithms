@@ -431,7 +431,7 @@ public class DistWithCoords {
             int u, v;
             u = in.nextInt();
             v = in.nextInt();
-            System.out.println(g.biDijkstra(u-1, v-1));
+            System.out.println((long)g.biDijkstra(u-1, v-1));
         }
         in.close();
     }
