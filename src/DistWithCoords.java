@@ -21,8 +21,8 @@ class Point {
 class Node {
 	private static final long INFINITY = Long.MAX_VALUE/4;
 	public int index;
-	public double dist;				//this is the distance from the source in the graph
-	public double distR;			//this is the distance from the target in the reverse graph
+	public double dist;				//this is the potential distance from the source in the graph
+	public double distR;			//this is the potential distance from the target in the reverse graph
 	public boolean visited;
 	public boolean visitedR;
 	public int pindex;
@@ -275,14 +275,14 @@ class BiGraph {
     	
     }
     
-    private double shortestPath() {
+    private double shortestPath(double cDist) {
     	double d = INFINITY;
     	double dn = 0;
     	for(Node n: working) {
     		dn = n.dist + n.distR;
     		d = Math.min(d, dn);
     	}
-    	return d;
+    	return d + cDist;					//convert the potential distance into the real distance
     }
 	
 	public double biDijkstra(int s, int t) {	//s & t are 0 indexed
@@ -306,11 +306,14 @@ class BiGraph {
 		decreaseKey(s, 0, heap);				//start the algorithm on this node in the forward direction
 		decreaseKey(t, 0, heapR);				//and from this one in the reverse direction (Reverse Graph => heapR)
 		
+		
 		working.add(sn);				//add the initial nodes to the working set
 		working.add(tn);
 		
 		
 		double result = -1;						//if after processing all nodes in the graph this is unchanged the target is unreachable
+		
+		double cDist = sn.coord.distance(tn.coord);		//shortest distance adjustment
 		
 		if(s == t) {
 			return 0;							//I found myself!!
@@ -343,7 +346,7 @@ class BiGraph {
 				r.visited = true;
 				if(r.visitedR == true) {				//stop when a node has been processed from both ends
 				
-					result = shortestPath();
+					result = shortestPath(cDist);
 					break;					
 				}
 					
@@ -375,7 +378,7 @@ class BiGraph {
 				rr.visitedR = true;
 				if(rr.visited == true) {
 				
-					result = shortestPath();
+					result = shortestPath(cDist);
 					break;
 				}
 			}
