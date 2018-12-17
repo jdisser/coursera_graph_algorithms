@@ -1,8 +1,6 @@
 import java.util.Scanner;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
-import java.util.PriorityQueue;
 import java.lang.Math;
 
 class Point {
@@ -23,8 +21,8 @@ class Point {
 class Node {
 	private static final long INFINITY = Long.MAX_VALUE/4;
 	public int index;
-	public long dist;			//this is the distance from the source in the graph
-	public long distR;			//this is the distance from the target in the reverse graph
+	public double dist;				//this is the distance from the source in the graph
+	public double distR;			//this is the distance from the target in the reverse graph
 	public boolean visited;
 	public boolean visitedR;
 	public int pindex;
@@ -66,12 +64,12 @@ class Edge {
 		this.lengthP = this.length;	//initially this is the same
 	}
 
-	//TODO: add a method that is passed potential reference node(s) and sets the lengthP property using the half difference
-	public void setLengthP(Node start, Node finish) {
-		double pfu = Math.sqrt(Math.pow((finish.coord.x - u.coord.x),2.0) + Math.pow(finish.coord.y - u.coord.y, 2.0));
-		double pfv = Math.sqrt(Math.pow((finish.coord.x - v.coord.x),2.0) + Math.pow(finish.coord.y - v.coord.y, 2.0));
-		double pru = Math.sqrt(Math.pow((start.coord.x - u.coord.x),2.0) + Math.pow(start.coord.y - u.coord.y, 2.0));
-		double prv = Math.sqrt(Math.pow((start.coord.x - v.coord.x),2.0) + Math.pow(start.coord.y - v.coord.y, 2.0));
+	
+	public void setLengthP(Node start, Node finish) { 		//parameters reference the current search directions (start = target in reverse)
+		double pfu = u.coord.distance(finish.coord);
+		double pfv = v.coord.distance(finish.coord);
+		double pru = u.coord.distance(start.coord);
+		double prv = v.coord.distance(start.coord);
 		
 		double pafu = (pfu - pru)/2;
 		double pafv = (pfv - prv)/2;
@@ -277,9 +275,9 @@ class BiGraph {
     	
     }
     
-    private long shortestPath() {
-    	long d = INFINITY;
-    	long dn = 0;
+    private double shortestPath() {
+    	double d = INFINITY;
+    	double dn = 0;
     	for(Node n: working) {
     		dn = n.dist + n.distR;
     		d = Math.min(d, dn);
@@ -287,7 +285,7 @@ class BiGraph {
     	return d;
     }
 	
-	public long biDijkstra(int s, int t) {	//s & t are 0 indexed
+	public double biDijkstra(int s, int t) {	//s & t are 0 indexed
 		
 		//implements meet in the middle bidirectional Dijkstra's algorithm
 
@@ -312,7 +310,7 @@ class BiGraph {
 		working.add(tn);
 		
 		
-		long result = -1;						//if after processing all nodes in the graph this is unchanged the target is unreachable
+		double result = -1;						//if after processing all nodes in the graph this is unchanged the target is unreachable
 		
 		if(s == t) {
 			return 0;							//I found myself!!
@@ -326,12 +324,14 @@ class BiGraph {
 //				System.out.println("processing Node: " + r.index);
 				for(Edge e : graph.get(r.index)) {
 					
-					Node tt = map.get(e.target);
+					e.setLengthP(sn, tn);				//Set the potential edge length in the forward direction
+					
+					Node tt = e.v;
 				
-					if(tt.dist > r.dist + e.length) {
+					if(tt.dist > r.dist + e.lengthP) {
 
 							working.add(tt);
-							tt.dist = r.dist + e.length;
+							tt.dist = r.dist + e.lengthP;
 							enQueue(tt, heap);
 
 						
@@ -356,13 +356,15 @@ class BiGraph {
 				
 				for(Edge er : graphR.get(rr.index)) {
 					
-					Node ttr = map.get(er.target);
+					er.setLengthP(tn, sn);				//start is target in Gr
+					
+					Node ttr = er.v;
 				
-					if(ttr.distR > rr.distR + er.length) {
+					if(ttr.distR > rr.distR + er.lengthP) {
 															
 
 							working.add(ttr);
-							ttr.distR = rr.distR + er.length;
+							ttr.distR = rr.distR + er.lengthP;
 							enQueue(ttr, heapR);
 
 						
@@ -390,80 +392,7 @@ class BiGraph {
 
 
 public class DistWithCoords {
-    private static class Impl {
-        // Number of nodes
-        int n;
-        // Coordinates of nodes
-        int[] x;
-        int[] y;
-        // See description of these fields in the starters for friend_suggestion
-        ArrayList<Integer>[][] adj;
-        ArrayList<Integer>[][] cost;
-        Long[][] distance;
-        ArrayList<PriorityQueue<Entry>> queue;
-        boolean[] visited;
-        ArrayList<Integer> workset;
-        final Long INFINITY = Long.MAX_VALUE / 4;
-
-        Impl(int n) {
-            this.n = n;
-            visited = new boolean[n];
-            x = new int[n];
-            y = new int[n];
-            Arrays.fill(visited, false);
-            workset = new ArrayList<Integer>();
-            distance = new Long[][] {new Long[n], new Long[n]};
-            for (int i = 0; i < n; ++i) {
-                distance[0][i] = distance[1][i] = INFINITY;
-            }
-            queue = new ArrayList<PriorityQueue<Entry>>();
-            queue.add(new PriorityQueue<Entry>(n));
-            queue.add(new PriorityQueue<Entry>(n));
-        }
-
-        // See the description of this method in the starters for friend_suggestion
-        void clear() {
-            for (int v : workset) {
-                distance[0][v] = distance[1][v] = infty;
-                visited[v] = false;
-            }
-            workset.clear();
-            queue.get(0).clear();
-            queue.get(1).clear();
-        }
-
-        // See the description of this method in the starters for friend_suggestion
-        void visit(int side, int v, Long dist) {
-            // Implement this method yourself
-        }
-
-        // Returns the distance from s to t in the graph.
-        Long query(int s, int t) {
-            clear();
-            visit(0, s, 0L);
-            visit(1, t, 0L);
-            // Implement the rest of the algorithm yourself
-
-            return -1;
-        }
-
-        class Entry implements Comparable<Entry>
-        {
-            Long cost;
-            int node;
-          
-            public Entry(Long cost, int node)
-            {
-                this.cost = cost;
-                this.node = node;
-            }
-         
-            public int compareTo(Entry other)
-            {
-                return cost < other.cost ? -1 : cost > other.cost ? 1 : 0;
-            }
-        }
-    }
+    
 
     public static void main(String args[]) {
         Scanner in = new Scanner(System.in);
@@ -499,7 +428,7 @@ public class DistWithCoords {
             int u, v;
             u = in.nextInt();
             v = in.nextInt();
-            System.out.println(DistWithCoords.query(u-1, v-1));
+            System.out.println(g.biDijkstra(u-1, v-1));
         }
         in.close();
     }
