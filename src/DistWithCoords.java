@@ -52,12 +52,35 @@ class Edge {
 	public int target;
 	public int source;
 	public double length;
+	public double lengthP;
+	public Node u;
+	public Node v;
 	
-	public Edge(int s, int t, int l) {
-		this.target = t;
-		this.source = s;
+	
+	public Edge(Node u, Node v, int l) {
+		this.target = u.index;
+		this.source = v.index;
+		this.u = u;
+		this.v = v;
 		this.length = (double)l;
+		this.lengthP = this.length;	//initially this is the same
 	}
+
+	//TODO: add a method that is passed potential reference node(s) and sets the lengthP property using the half difference
+	public void setLengthP(Node start, Node finish) {
+		double pfu = Math.sqrt(Math.pow((finish.coord.x - u.coord.x),2.0) + Math.pow(finish.coord.y - u.coord.y, 2.0));
+		double pfv = Math.sqrt(Math.pow((finish.coord.x - v.coord.x),2.0) + Math.pow(finish.coord.y - v.coord.y, 2.0));
+		double pru = Math.sqrt(Math.pow((start.coord.x - u.coord.x),2.0) + Math.pow(start.coord.y - u.coord.y, 2.0));
+		double prv = Math.sqrt(Math.pow((start.coord.x - v.coord.x),2.0) + Math.pow(start.coord.y - v.coord.y, 2.0));
+		
+		double pafu = (pfu - pru)/2;
+		double pafv = (pfv - prv)/2;
+		
+		lengthP = length - pafu + pafv;
+		
+	}
+	
+	
 }
 
 class BiGraph {
@@ -137,8 +160,12 @@ class BiGraph {
 		s -= 1;
 		t -= 1;								//raw vertexes are 1 based, map indices are 0 based
 		
-		Edge e = new Edge(s, t, c);
-        Edge er = new Edge(t, s, c);
+		Node source = map.get(s);
+		Node target = map.get(t);
+		
+		
+		Edge e = new Edge(source, target, c);
+        Edge er = new Edge(target, source, c);
 
         graph.get(s).add(e);
 		graphR.get(t).add(er);
