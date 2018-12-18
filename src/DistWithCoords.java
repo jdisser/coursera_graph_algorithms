@@ -20,11 +20,15 @@ class Point {
 
 class Node {
 	private static final long INFINITY = Long.MAX_VALUE/4;
-	public int index;
-	public double dist;				//this is the potential distance from the source in the graph
-	public double distR;			//this is the potential distance from the target in the reverse graph
-	public boolean visited;
-	public boolean visitedR;
+	public int index;				//this is the map index for back reference
+	public long dist;				//this is the distance from the source in the graph
+	public long distR;				//this is the distance from the target in the reverse graph
+	public double k;				//k(v) = d(s,v) + p(v)   actual distance from s plus estimated distance (euclidean distance) to t
+	public double kr;
+	public boolean processed;
+	public boolean processedR;
+	public boolean queued;
+	public boolean queuedR;
 	public int pindex;
 	public Point coord;
 	
@@ -32,8 +36,10 @@ class Node {
         this.index = i;
         this.dist = INFINITY;
         this.distR = INFINITY;
-        this.visited = false;
-        this.visitedR = false;
+        this.processed = false;
+        this.processedR = false;
+        this.queued = false;
+        this.queuedR = false;
         this.pindex = -1;
         this.coord = coord;
 	}
@@ -41,9 +47,26 @@ class Node {
 	public void resetNode() {
 		this.dist = INFINITY;
         this.distR = INFINITY;
-        this.visited = false;
-        this.visitedR = false;
-	}		
+        this.processed = false;
+        this.processedR = false;
+        this.queued = false;
+        this.queuedR = false;
+	}
+	
+	private double pf(Node finish, Node start) {
+		double pf = (coord.distance(finish.coord) - coord.distance(start.coord))/2 + finish.coord.distance(start.coord)/2;
+		return pf;
+	}
+
+	public double setK(Node finish, Node start) {
+		k = dist + pf(finish, start);
+		return k;
+	}
+	
+	public double setKr(Node finish, Node start) {
+		kr = dist + pf(finish, start);
+		return kr;
+	}
 }
 
 class Edge {
@@ -285,7 +308,7 @@ class BiGraph {
     	return d + cDist;					//convert the potential distance into the real distance
     }
 	
-	public double biDijkstra(int s, int t) {	//s & t are 0 indexed
+	public long biDijkstra(int s, int t) {	//s & t are 0 indexed
 		
 		//implements meet in the middle bidirectional Dijkstra's algorithm
 
@@ -343,8 +366,8 @@ class BiGraph {
 //					++processed;
 				}
 		
-				r.visited = true;
-				if(r.visitedR == true) {				//stop when a node has been processed from both ends
+				r.processed = true;
+				if(r.processedR == true) {				//stop when a node has been processed from both ends
 				
 					result = shortestPath(cDist);
 					break;					
@@ -375,8 +398,8 @@ class BiGraph {
 					}
 //					++processed;
 				}
-				rr.visitedR = true;
-				if(rr.visited == true) {
+				rr.processedR = true;
+				if(rr.processed == true) {
 				
 					result = shortestPath(cDist);
 					break;
