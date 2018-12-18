@@ -23,7 +23,7 @@ class Node {
 	public int index;				//this is the map index for back reference
 	public long dist;				//this is the distance from the source in the graph
 	public long distR;				//this is the distance from the target in the reverse graph
-	public double k;				//k(v) = d(s,v) + p(v)   actual distance from s plus estimated distance (euclidean distance) to t
+	public double k;				//k(v) = d(s,v) + p(v)   actual distance from s plus potential function to t
 	public double kr;
 	public boolean processed;
 	public boolean processedR;
@@ -62,7 +62,7 @@ class Node {
 		k = dist + pf(finish, start);
 		return k;
 	}
-	
+	//TODO: check that this works or if start <-> finish
 	public double setKr(Node finish, Node start) {
 		kr = dist + pf(finish, start);
 		return kr;
@@ -205,10 +205,10 @@ class BiGraph {
     	int rght = 2*i + 2;
     	
     	if(h == heap) {
-    		if(left <= li && h.get(left).dist < h.get(mini).dist) {
+    		if(left <= li && h.get(left).k < h.get(mini).k) {
         		mini = left;
         	}
-        	if(rght <= li && h.get(rght).dist < h.get(mini).dist) {
+        	if(rght <= li && h.get(rght).k < h.get(mini).k) {
         		mini = rght;
         	}
         	if(mini != i) {
@@ -216,10 +216,10 @@ class BiGraph {
     	   		minSiftDown(mini, h);
         	}
     	} else {
-    		if(left <= li && h.get(left).distR < h.get(mini).distR) {
+    		if(left <= li && h.get(left).kr < h.get(mini).kr) {
         		mini = left;
         	}
-        	if(rght <= li && h.get(rght).distR < h.get(mini).distR) {
+        	if(rght <= li && h.get(rght).kr < h.get(mini).kr) {
         		mini = rght;
         	}
         	if(mini != i) {
@@ -250,12 +250,12 @@ class BiGraph {
 			
 //			System.out.println(" minSiftUp pi: " + pi);
 			if(h == heap) {
-				if(h.get(pi).dist > h.get(i).dist) {
+				if(h.get(pi).k > h.get(i).k) {
 					swap(pi, i, h);
 					minSiftUp(pi, h);
 				}
 			} else {
-				if(h.get(pi).distR > h.get(i).distR) {
+				if(h.get(pi).kr > h.get(i).kr) {
 					swap(pi, i, h);
 					minSiftUp(pi, h);
 				}
@@ -276,14 +276,14 @@ class BiGraph {
 		return nm;
 	}
 	
-	private void decreaseKey(int i, long d, ArrayList<Node> h) {
+	private void decreaseKey(int i, double d, ArrayList<Node> h) {
 		
 //		System.out.println(" decreaseKey i: " + i + " d: " + d);
 		Node dn = map.get(i);
 		if(h == heapR) {
-			dn.distR = d;
+			dn.kr = d;
 		} else {
-			dn.dist = d;
+			dn.k = d;
 		}
 		int dni = h.indexOf(dn);
 		minSiftUp(dni, h);
@@ -308,7 +308,7 @@ class BiGraph {
     	return d + cDist;					//convert the potential distance into the real distance
     }
 	
-	public long biDijkstra(int s, int t) {	//s & t are 0 indexed
+	public long biAStar(int s, int t) {	//s & t are 0 indexed
 		
 		//implements meet in the middle bidirectional Dijkstra's algorithm
 
@@ -454,7 +454,7 @@ public class DistWithCoords {
             int u, v;
             u = in.nextInt();
             v = in.nextInt();
-            System.out.println((long)g.biDijkstra(u-1, v-1));
+            System.out.println((long)g.biAStar(u-1, v-1));
         }
         in.close();
     }
