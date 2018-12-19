@@ -23,8 +23,8 @@ class Node {
 	public int index;				//this is the map index for back reference
 	public long dist;				//this is the distance from the source in the graph
 	public long distR;				//this is the distance from the target in the reverse graph
-	public double k;				//k(v) = d(s,v) + p(v)   actual distance from s plus potential function to t
-	public double kr;
+	public double k;				//k(v) = d(s,v) + pf(v)   actual distance from s plus potential function to t
+	public double kr;				//kr(v) = dr(s,v) + pf(v)   actual distance from s plus potential function to t
 	public boolean processed;
 	public boolean processedR;
 	public boolean queued;
@@ -53,18 +53,18 @@ class Node {
         this.queuedR = false;
 	}
 	
-	private double pf(Node finish, Node start) {
+	private double pf(Node start, Node finish) {
 		double pf = (coord.distance(finish.coord) - coord.distance(start.coord))/2 + finish.coord.distance(start.coord)/2;
 		return pf;
 	}
 
-	public double setK(Node finish, Node start) {
-		k = dist + pf(finish, start);
+	public double setK(Node start, Node finish) {
+		k = dist + pf(start, finish);
 		return k;
 	}
 	//TODO: check that this works or if start <-> finish
-	public double setKr(Node finish, Node start) {
-		kr = dist + pf(finish, start);
+	public double setKr(Node start, Node finish) {
+		kr = distR + pf(start, finish);
 		return kr;
 	}
 }
@@ -119,6 +119,7 @@ class BiGraph {
 	
 	public int root;
 	public int n;
+	public long mu = INFINITY;
 
 	
 	public BiGraph(int n) {
@@ -276,14 +277,16 @@ class BiGraph {
 		return nm;
 	}
 	
-	private void decreaseKey(int i, double d, ArrayList<Node> h) {
+	private void decreaseKey(int i, long d, Node start, Node finish, ArrayList<Node> h) {
 		
 //		System.out.println(" decreaseKey i: " + i + " d: " + d);
 		Node dn = map.get(i);
 		if(h == heapR) {
-			dn.kr = d;
+			dn.distR = d;
+			dn.setKr(start, finish);
 		} else {
-			dn.k = d;
+			dn.dist = d;
+			dn.setK(start, finish);
 		}
 		int dni = h.indexOf(dn);
 		minSiftUp(dni, h);
@@ -310,11 +313,13 @@ class BiGraph {
 	
 	public long biAStar(int s, int t) {	//s & t are 0 indexed
 		
-		//implements meet in the middle bidirectional Dijkstra's algorithm
+		//implements  bidirectional A* algorithm
 
 //		long start = System.nanoTime();
 		
 //		int processed = 0;
+		
+		double prt; 
 		
 		initializeQueues();
 		
@@ -323,11 +328,15 @@ class BiGraph {
 		Node sn = map.get(s);
 		Node tn = map.get(t);
 		
-		enQueue(sn, heap);
-		enQueue(tn, heapR);
+		prt = tn.coord.distance(sn.coord);		//reverse potential of target
 		
-		decreaseKey(s, 0, heap);				//start the algorithm on this node in the forward direction
-		decreaseKey(t, 0, heapR);				//and from this one in the reverse direction (Reverse Graph => heapR)
+		enQueue(sn, heap);
+		sn.queued = true;
+		enQueue(tn, heapR);
+		tn.queuedR = true;
+		
+		decreaseKey(s, 0, sn, tn, heap);				//start the algorithm on this node in the forward direction
+		decreaseKey(t, 0, sn, tn, heapR);				//and from this one in the reverse direction (Reverse Graph => heapR)
 		
 		
 		working.add(sn);				//add the initial nodes to the working set
@@ -355,7 +364,10 @@ class BiGraph {
 					Node tt = e.v;
 				
 					if(tt.dist > r.dist + e.lengthP) {
-
+							//TODO: handle enqueue vs decrease key using #queued
+							//TODO: implement setK(r)
+							//TODO: implement #dist(r) to track actual distance
+							//TODO: implment mu (best actual distance seen so far)
 							working.add(tt);
 							tt.dist = r.dist + e.lengthP;
 							enQueue(tt, heap);
@@ -364,8 +376,9 @@ class BiGraph {
 //						tt.pindex = r.index;				//min path is my daddy
 					}
 //					++processed;
+					//TODO: implement processed(R) and handle #queued(R)
 				}
-		
+				//TODO: implement stopping criteria if k(top) + kr(topR) > mu + prt after searches touch
 				r.processed = true;
 				if(r.processedR == true) {				//stop when a node has been processed from both ends
 				
