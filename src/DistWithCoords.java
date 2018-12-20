@@ -62,9 +62,9 @@ class Node {
 		k = dist + pf(start, finish);
 		return k;
 	}
-	//TODO: check that this works or if start <-> finish
+	
 	public double setKr(Node start, Node finish) {
-		kr = distR + pf(start, finish);
+		kr = distR + pf(finish, start);					//start = finish for reverse graph potential
 		return kr;
 	}
 }
@@ -325,21 +325,25 @@ class BiGraph {
 		Node sn = map.get(s);
 		Node tn = map.get(t);
 		
-		prt = tn.coord.distance(sn.coord);		//reverse potential of target
+		sn.dist = 0;
+		sn.setK(sn, tn);
+		
+		tn.distR = 0;
+		tn.setKr(sn, tn);
+		
+		prt = tn.kr;									//reverse potential of target since tn.distr = 0;
 		
 		enQueue(sn, heap);
 		sn.queued = true;
 		enQueue(tn, heapR);
-		tn.queuedR = true;
-		decreaseKey(sn, 0, sn, tn, heap);				//start the algorithm on this node in the forward direction
-		decreaseKey(tn, 0, sn, tn, heapR);				//and from this one in the reverse direction (Reverse Graph => heapR)	
+		tn.queuedR = true;	
 		working.add(sn);								//add the initial nodes to the working set
 		working.add(tn);	
 		long result = -1;								//if after processing all nodes in the graph this is unchanged the target is unreachable
 		
 		
 		if(s == t) {
-			return 0;							//I found myself!!
+			return 0;									//I found myself!!
 		}
 		
 		while(!heap.isEmpty() || !heapR.isEmpty()) {
@@ -354,38 +358,36 @@ class BiGraph {
 				for(Edge e : graph.get(processing.index)) {
 					
 					Node tt = e.v;
+					
+					long td = processing.dist + e.length;
 				
-					if(tt.dist > processing.dist + e.length) {
-							//TODO: handle enqueue vs decrease key using #queued
-							//TODO: implement setK(kr)
-							//TODO: implement #dist(distr) to track actual distance
-							//TODO: implment mu (best actual distance seen so far)
+					if(tt.dist > td) {
 							
 							working.add(tt);
 							
 							if(tt.queued == false) {
-								tt.dist = processing.dist + e.length;
+								tt.dist = td;
 								tt.setK(sn, tn);
 								enQueue(tt, heap);
 								tt.queued = true;
 							} else {
-								decreaseKey(tt, processing.dist + e.length, sn, tn, heap);
+								decreaseKey(tt, td, sn, tn, heap);
 							}
 
 //						tt.pindex = processing.index;				//min path is my daddy
 					}
 //					++processed;
 				}
-				//TODO: implement stopping criteria if k(top) + kr(topR) > mu + prt after searches touch
+				
 				processing.processed = true;
 				
 				if(processing.processedR == true) {				
 					long tp = processing.dist + processing.distR;
 					if( tp < mu) {
 						mu = tp; 
+						result = mu;
 					}
 					if(heap.get(0).k + heapR.get(0).kr > mu + prt) {	//stop when the shortest queued nodes have estimated paths longer than the shortest one found
-						result = mu;
 						break;
 					}
 										
@@ -403,17 +405,19 @@ class BiGraph {
 				for(Edge er : graphR.get(processingR.index)) {
 			
 					Node ttr = er.v;
+					
+					long tdr = processingR.distR + er.length;
 				
-					if(ttr.distR > processingR.distR + er.length) {
+					if(ttr.distR > tdr) {
 
 							working.add(ttr);
-							if(ttr.queued == false) {
-								ttr.dist = processingR.dist + er.length;
-								ttr.setK(sn, tn);
-								enQueue(ttr, heap);
-								ttr.queued = true;
+							if(ttr.queuedR == false) {
+								ttr.distR = tdr;
+								ttr.setKr(sn, tn);
+								enQueue(ttr, heapR);
+								ttr.queuedR = true;
 							} else {
-								decreaseKey(ttr, processingR.dist + er.length, sn, tn, heap);
+								decreaseKey(ttr, tdr, sn, tn, heapR);
 							}
 					
 //						ttr.pindex = rr.index;
@@ -424,10 +428,10 @@ class BiGraph {
 				if(processingR.processed == true) {
 					long tp = processingR.dist + processingR.distR;
 					if( tp < mu) {
-						mu = tp; 
+						mu = tp;
+						result = mu;
 					}
 					if(heap.get(0).k + heapR.get(0).kr > mu + prt) {
-						result = mu;
 						break;
 					}
 					
@@ -481,7 +485,7 @@ public class DistWithCoords {
             int u, v;
             u = in.nextInt();
             v = in.nextInt();
-            System.out.println((long)g.biAStar(u-1, v-1));
+            System.out.println(g.biAStar(u-1, v-1));
         }
         in.close();
     }
