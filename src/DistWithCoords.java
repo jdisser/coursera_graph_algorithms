@@ -17,6 +17,23 @@ class Point {
 	}
 }
 
+class Barrier {
+	public Point ll;
+	public Point ur;
+	
+	public Barrier(int llx, int lly, int urx, int ury) {
+		this.ll = new Point(llx,lly);
+		this.ur = new Point(urx, ury);
+	}
+	
+	public boolean contains(Point px) {
+		if(px.x <= ur.x && px.x >= ll.x && px.y >= ll.y && px.y <= ur.y)
+			return true;
+		else
+			return false;
+	}
+}
+
 
 class Node {
 	private static final long INFINITY = Long.MAX_VALUE/4;
@@ -29,6 +46,7 @@ class Node {
 	public boolean processedR;
 	public boolean queued;
 	public boolean queuedR;
+	public boolean active;
 	public int pindex;
 	public Point coord;
 	
@@ -42,6 +60,7 @@ class Node {
         this.queuedR = false;
         this.pindex = -1;
         this.coord = coord;
+        this.active = true;
 	}
 	
 	public void resetNode() {
@@ -66,6 +85,10 @@ class Node {
 	public double setKr(Node start, Node finish) {
 		kr = distR + pf(finish, start);					//start = finish for reverse graph potential
 		return kr;
+	}
+	
+	public static int nodeNumber(int i, int j, int w) {	//1 index position of node in test graph w x h
+		return w*(j - 1) + i;
 	}
 }
 
@@ -113,6 +136,8 @@ class BiGraph {
 	public ArrayList<Node> map;						//returns Nodes by vertex (index)
 	public HashSet<Node> working;					//all nodes processed by query that must be reset
 	
+	public ArrayList<Barrier> barriers;				//for generating sets of inactive nodes for test graphs
+	
 	public final long INFINITY = Long.MAX_VALUE / 4;
 
 
@@ -143,12 +168,64 @@ class BiGraph {
         }
         
         this.root = -1;
+        
+        this.barriers = new ArrayList<Barrier>();
 
 	}
 	
-	public void addNode(int i, Point p) {
+	public void genTestGraph(int W, int H, int L, int C) {
+
+		
+		
+		//generate a complete grid of active and inactive nodes
+		for(int i = 1; i <= W; ++i) {
+			for(int j = 1; j <= H; ++j) {
+				Point p = new Point((i - 1) * L, (j - 1) * L);
+				Node n = addNode(Node.nodeNumber(i,j,W),p);
+				for(Barrier b: barriers) {
+					if(b.contains(p)) {
+						n.active = false;
+					}
+				}
+			}
+		}
+		
+		//generate the set of edges connecting the adjacent active nodes
+		//note graph will be directed but bidirectional with different distances in each direction
+		for(int i = 1; i <= W; ++ i) {
+			for(int j = 1; j <= H; ++j) {
+				Node n = map.get(Node.nodeNumber(i, j, W));
+				if(n.active) {
+					for(int ii = -1; ii <= 1; ++ii) {
+						for(int jj = -1; jj <= 1; ++jj) {
+							if(i + ii > 0 && j + jj > 0 && i + ii <= W && j + jj <= H) {
+								Node t = map.get(Node.nodeNumber(i + ii, j + jj, W));
+								if(t.active) {
+									if(ii * jj == 0) {
+										addEdges(n.index,t.index,L + (int)Math.ceil(Math.random() * L / C));
+									} else {
+										addEdges(n.index,t.index,(L * 3) / 2 + (int)Math.ceil(Math.random() * L / C));
+									}
+									
+								}	
+							}
+						}
+					}
+				}
+			}
+		}
+			
+	}
+	
+	public void addBarrier(int llx, int lly, int urx, int ury) {
+		Barrier b = new Barrier(llx,lly,urx,ury);
+		barriers.add(b);
+	}
+	
+	public Node addNode(int i, Point p) {
 		Node n = new Node(i,p);
 		map.add(i, n);
+		return n;
 	}
 	
 	public void initializeQueues() {
@@ -458,6 +535,18 @@ public class DistWithCoords {
     
 
     public static void main(String args[]) {
+    	
+		/*
+		g.addBarrier(4,4,4,10));
+		g.addBarrier(1,10,9,10));
+		g.addBarrier(9,7,9,13));
+		g.addBarrier(7,7,17,7));
+		g.addBarrier(5,13,15,13));
+		g.addBarrier(10,3,13,6));
+		*/
+    	
+    	
+    	
         Scanner in = new Scanner(System.in);
         int n = in.nextInt();
         int m = in.nextInt();
