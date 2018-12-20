@@ -72,7 +72,7 @@ class Node {
 class Edge {
 	public int target;
 	public int source;
-	public double length;
+	public long length;
 	public double lengthP;
 	public Node u;
 	public Node v;
@@ -83,11 +83,11 @@ class Edge {
 		this.source = v.index;
 		this.u = u;
 		this.v = v;
-		this.length = (double)l;
+		this.length = l;
 		this.lengthP = this.length;	//initially this is the same
 	}
 
-	
+	//this method is for BiDijkstra with modified edges, conflicts with grader (double vs long)
 	public void setLengthP(Node start, Node finish) { 		//parameters reference the current search directions (start = target in reverse)
 		double pfu = u.coord.distance(finish.coord);
 		double pfv = v.coord.distance(finish.coord);
@@ -277,10 +277,10 @@ class BiGraph {
 		return nm;
 	}
 	
-	private void decreaseKey(int i, long d, Node start, Node finish, ArrayList<Node> h) {
+	private void decreaseKey(Node dn, long d, Node start, Node finish, ArrayList<Node> h) {
 		
 //		System.out.println(" decreaseKey i: " + i + " d: " + d);
-		Node dn = map.get(i);
+		
 		if(h == heapR) {
 			dn.distR = d;
 			dn.setKr(start, finish);
@@ -311,20 +311,17 @@ class BiGraph {
     	return d + cDist;					//convert the potential distance into the real distance
     }
 	
-	public long biAStar(int s, int t) {	//s & t are 0 indexed
+	public long biAStar(int s, int t) {	//s & t are 0 indexed inegers from the graph data
 		
 		//implements  bidirectional A* algorithm
-
-//		long start = System.nanoTime();
-		
+//		long start = System.nanoTime();	
 //		int processed = 0;
 		
-		double prt; 
+		double prt;
+		long mu = INFINITY;
 		
 		initializeQueues();
-		
 		resetWorkingNodes();
-		
 		Node sn = map.get(s);
 		Node tn = map.get(t);
 		
@@ -334,18 +331,12 @@ class BiGraph {
 		sn.queued = true;
 		enQueue(tn, heapR);
 		tn.queuedR = true;
+		decreaseKey(sn, 0, sn, tn, heap);				//start the algorithm on this node in the forward direction
+		decreaseKey(tn, 0, sn, tn, heapR);				//and from this one in the reverse direction (Reverse Graph => heapR)	
+		working.add(sn);								//add the initial nodes to the working set
+		working.add(tn);	
+		long result = -1;								//if after processing all nodes in the graph this is unchanged the target is unreachable
 		
-		decreaseKey(s, 0, sn, tn, heap);				//start the algorithm on this node in the forward direction
-		decreaseKey(t, 0, sn, tn, heapR);				//and from this one in the reverse direction (Reverse Graph => heapR)
-		
-		
-		working.add(sn);				//add the initial nodes to the working set
-		working.add(tn);
-		
-		
-		double result = -1;						//if after processing all nodes in the graph this is unchanged the target is unreachable
-		
-		double cDist = sn.coord.distance(tn.coord);		//shortest distance adjustment
 		
 		if(s == t) {
 			return 0;							//I found myself!!
@@ -355,67 +346,91 @@ class BiGraph {
 	
 			if(!heap.isEmpty()) {						//process the next node in the forward graph
 				
-				Node r = getMin(heap);
-//				System.out.println("processing Node: " + r.index);
-				for(Edge e : graph.get(r.index)) {
-					
-					e.setLengthP(sn, tn);				//Set the potential edge length in the forward direction
+				Node processing = getMin(heap);
+				processing.queued = false;
+				
+//				System.out.println("processing Node: " + processing.index);
+				
+				for(Edge e : graph.get(processing.index)) {
 					
 					Node tt = e.v;
 				
-					if(tt.dist > r.dist + e.lengthP) {
+					if(tt.dist > processing.dist + e.length) {
 							//TODO: handle enqueue vs decrease key using #queued
-							//TODO: implement setK(r)
-							//TODO: implement #dist(r) to track actual distance
+							//TODO: implement setK(kr)
+							//TODO: implement #dist(distr) to track actual distance
 							//TODO: implment mu (best actual distance seen so far)
+							
 							working.add(tt);
-							tt.dist = r.dist + e.lengthP;
-							enQueue(tt, heap);
+							
+							if(tt.queued == false) {
+								tt.dist = processing.dist + e.length;
+								tt.setK(sn, tn);
+								enQueue(tt, heap);
+								tt.queued = true;
+							} else {
+								decreaseKey(tt, processing.dist + e.length, sn, tn, heap);
+							}
 
-						
-//						tt.pindex = r.index;				//min path is my daddy
+//						tt.pindex = processing.index;				//min path is my daddy
 					}
 //					++processed;
-					//TODO: implement processed(R) and handle #queued(R)
 				}
 				//TODO: implement stopping criteria if k(top) + kr(topR) > mu + prt after searches touch
-				r.processed = true;
-				if(r.processedR == true) {				//stop when a node has been processed from both ends
+				processing.processed = true;
 				
-					result = shortestPath(cDist);
-					break;					
+				if(processing.processedR == true) {				
+					long tp = processing.dist + processing.distR;
+					if( tp < mu) {
+						mu = tp; 
+					}
+					if(heap.get(0).k + heapR.get(0).kr > mu + prt) {	//stop when the shortest queued nodes have estimated paths longer than the shortest one found
+						result = mu;
+						break;
+					}
+										
 				}
 					
 			}
 			
 			if(!heapR.isEmpty()) {						//process the next node in the reverse graph
 				
-				Node rr = getMin(heapR);	
+				Node processingR = getMin(heapR);
+				processingR.queuedR = false;
+				
 //				System.out.println("processing Node: " + rr.index);
 				
-				for(Edge er : graphR.get(rr.index)) {
-					
-					er.setLengthP(tn, sn);				//start is target in Gr
-					
+				for(Edge er : graphR.get(processingR.index)) {
+			
 					Node ttr = er.v;
 				
-					if(ttr.distR > rr.distR + er.lengthP) {
-															
+					if(ttr.distR > processingR.distR + er.length) {
 
 							working.add(ttr);
-							ttr.distR = rr.distR + er.lengthP;
-							enQueue(ttr, heapR);
-
-						
+							if(ttr.queued == false) {
+								ttr.dist = processingR.dist + er.length;
+								ttr.setK(sn, tn);
+								enQueue(ttr, heap);
+								ttr.queued = true;
+							} else {
+								decreaseKey(ttr, processingR.dist + er.length, sn, tn, heap);
+							}
+					
 //						ttr.pindex = rr.index;
 					}
 //					++processed;
 				}
-				rr.processedR = true;
-				if(rr.processed == true) {
-				
-					result = shortestPath(cDist);
-					break;
+				processingR.processedR = true;
+				if(processingR.processed == true) {
+					long tp = processingR.dist + processingR.distR;
+					if( tp < mu) {
+						mu = tp; 
+					}
+					if(heap.get(0).k + heapR.get(0).kr > mu + prt) {
+						result = mu;
+						break;
+					}
+					
 				}
 			}
 			
@@ -425,7 +440,6 @@ class BiGraph {
 //		System.out.println("BiDijkstra processed edges: " + processed + " ms: " + elapsed);
 		return result;
     }
-
 }
 
 
