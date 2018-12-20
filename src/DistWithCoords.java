@@ -387,9 +387,12 @@ class BiGraph {
 						mu = tp; 
 						result = mu;
 					}
-					if(heap.get(0).k + heapR.get(0).kr > mu + prt) {	//stop when the shortest queued nodes have estimated paths longer than the shortest one found
-						break;
+					if(!heap.isEmpty()) {
+						if(heap.get(0).k + heapR.get(0).kr > mu + prt) {	//stop when the shortest queued nodes have estimated paths longer than the shortest one found
+							break;
+						}
 					}
+
 										
 				}
 					
@@ -431,9 +434,12 @@ class BiGraph {
 						mu = tp;
 						result = mu;
 					}
-					if(heap.get(0).k + heapR.get(0).kr > mu + prt) {
-						break;
+					if(!heapR.isEmpty()) {
+						if(heap.get(0).k + heapR.get(0).kr > mu + prt) {
+							break;
+						}
 					}
+
 					
 				}
 			}
