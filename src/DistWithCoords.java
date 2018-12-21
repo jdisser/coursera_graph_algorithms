@@ -434,7 +434,7 @@ class BiGraph {
 				
 				for(Edge e : graph.get(processing.index)) {
 					
-					Node tt = e.v;
+					Node tt = e.v;	//TODO: && !processed ???
 					
 					long td = processing.dist + e.length;
 				
@@ -442,7 +442,7 @@ class BiGraph {
 							
 							working.add(tt);
 							
-							if(tt.queued == false) {
+							if(tt.queued == false) {	
 								tt.dist = td;
 								tt.setK(sn, tn);
 								enQueue(tt, heap);
@@ -484,7 +484,7 @@ class BiGraph {
 				
 				for(Edge er : graphR.get(processingR.index)) {
 			
-					Node ttr = er.v;
+					Node ttr = er.v;		//TODO: && !processed ???
 					
 					long tdr = processingR.distR + er.length;
 				
@@ -536,52 +536,92 @@ public class DistWithCoords {
 
     public static void main(String args[]) {
     	
-		/*
-		g.addBarrier(4,4,4,10));
-		g.addBarrier(1,10,9,10));
-		g.addBarrier(9,7,9,13));
-		g.addBarrier(7,7,17,7));
-		g.addBarrier(5,13,15,13));
-		g.addBarrier(10,3,13,6));
-		*/
+		
+    	
+    	if(args.length != 0) {
+
+    		
+    		int W = 19;						//node grid W x H
+    		int H = 15;
+    		int L = 32;						//node spacing
+    		int C = 4;						//random edge extension factor (L / C)
+    		
+    		BiGraph g = new BiGraph(W * H);
+    		
+    		
+    		g.addBarrier(4,4,4,10);			//set of inactive nodes
+    		g.addBarrier(1,10,9,10);
+    		g.addBarrier(9,7,9,13);
+    		g.addBarrier(7,7,17,7);
+    		g.addBarrier(5,13,15,13);
+    		g.addBarrier(10,3,13,6);
+    		
+    		
+    		long start = System.nanoTime();
+    		g.genTestGraph(W, H, L, C);
+    		long finish = System.nanoTime();
+    		long elapsed = (finish - start)/1000000;
+    		
+    		System.out.println("Graph generation time: " + elapsed + " ms" );
+    		
+    		start = System.nanoTime();
+    		
+    		//TODO: put test here use (3,2) & (7,12) initially then randomly generate active points
+    		
+    		
+    		finish = System.nanoTime();
+    		elapsed = (finish - start) / 1000000;
+    		
+    		//TODO: add biDijkstra and Dijkstra with runtime on the same graph/query
+    		//TODO: print out number of nodes processed and result with match/mismatch and proessing time
+    		
+    		
+    		
+    		System.out.println("Query time: " + elapsed + " ms" );
+    		
+    		
+    		
+    		
+    	} else {
     	
     	
     	
-        Scanner in = new Scanner(System.in);
-        int n = in.nextInt();
-        int m = in.nextInt();
-        
-        BiGraph g = new BiGraph(n);
-
-        for (int i = 0; i < n; i++) { 
-            int x, y;
-            x = in.nextInt();
-            y = in.nextInt();
-            
-            Point p = new Point(x , y);
-            g.addNode(i, p);
-
-        }
-
-        for (int i = 0; i < m; i++) {
-            int x, y, c;
-            x = in.nextInt();
-            y = in.nextInt();
-            c = in.nextInt();
-            
-            g.addEdges(x, y, c);
-            
- 
-        }
-
-        int t = in.nextInt();
-
-        for (int i = 0; i < t; i++) {
-            int u, v;
-            u = in.nextInt();
-            v = in.nextInt();
-            System.out.println(g.biAStar(u-1, v-1));
-        }
-        in.close();
+	        Scanner in = new Scanner(System.in);
+	        int n = in.nextInt();
+	        int m = in.nextInt();
+	        
+	        BiGraph g = new BiGraph(n);
+	
+	        for (int i = 0; i < n; i++) { 
+	            int x, y;
+	            x = in.nextInt();
+	            y = in.nextInt();
+	            
+	            Point p = new Point(x , y);
+	            g.addNode(i, p);
+	
+	        }
+	
+	        for (int i = 0; i < m; i++) {
+	            int x, y, c;
+	            x = in.nextInt();
+	            y = in.nextInt();
+	            c = in.nextInt();
+	            
+	            g.addEdges(x, y, c);
+	            
+	 
+	        }
+	
+	        int t = in.nextInt();
+	
+	        for (int i = 0; i < t; i++) {
+	            int u, v;
+	            u = in.nextInt();
+	            v = in.nextInt();
+	            System.out.println(g.biAStar(u-1, v-1));
+	        }
+	        in.close();
+	    }
     }
 }
