@@ -1,5 +1,6 @@
 import java.util.Scanner;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.lang.Math;
 
@@ -21,12 +22,13 @@ class Barrier {
 	public Point ll;
 	public Point ur;
 	
-	public Barrier(int llx, int lly, int urx, int ury) {
-		this.ll = new Point(llx,lly);
-		this.ur = new Point(urx, ury);
+	public Barrier(int llx, int lly, int urx, int ury, int L) {
+		this.ll = new Point((llx - 1) * L,(lly - 1) * L);
+		this.ur = new Point((urx - 1) * L, (ury - 1) * L);
 	}
 	
 	public boolean contains(Point px) {
+//		System.out.println("Contains: p(" + px.x + "," + px.y + ") ll(" + ll.x + "," + ll.y + ") ur(" + ur.x + "," + ur.y + ")");
 		if(px.x <= ur.x && px.x >= ll.x && px.y >= ll.y && px.y <= ur.y)
 			return true;
 		else
@@ -133,7 +135,7 @@ class BiGraph {
 	public ArrayList<ArrayList<Edge>> graphR;		//adjacency list of reversed edges
 	public ArrayList<Node> heap;					//priority queue with method to update key values
 	public ArrayList<Node> heapR;					//priority queue for reversed graph
-	public ArrayList<Node> map;						//returns Nodes by vertex (index)
+	public HashMap<Integer,Node> map;				//returns Nodes by vertex (index)
 	public HashSet<Node> working;					//all nodes processed by query that must be reset
 	
 	public ArrayList<Barrier> barriers;				//for generating sets of inactive nodes for test graphs
@@ -156,11 +158,11 @@ class BiGraph {
         this.heap = new ArrayList<Node>();
         this.heapR = new ArrayList<Node>();
         
-        this.map = new ArrayList<Node>();
+        this.map = new HashMap<Integer,Node>(n+1);
         
         this.working = new HashSet<Node>();
         
-        for (int i = 0; i < n; i++) {					//graph indexes and nodes are 0 indexed
+        for (int i = 0; i <= n; i++) {					//graph indexes and nodes are 1 indexed, index 0 not used
         	
             this.graph.add(new ArrayList<Edge>());
             this.graphR.add(new ArrayList<Edge>());          
@@ -177,6 +179,7 @@ class BiGraph {
 
 		int nodes = 0;
 		int edges = 0;
+		int inactive = 0;
 		
 		//generate a complete grid of active and inactive nodes
 		for(int i = 1; i <= W; ++i) {
@@ -186,6 +189,7 @@ class BiGraph {
 				for(Barrier b: barriers) {
 					if(b.contains(p)) {
 						n.active = false;
+						++inactive;
 					}
 				}
 				++nodes;
@@ -220,17 +224,17 @@ class BiGraph {
 				}
 			}
 		}
-		System.out.println("Generated edges: " + edges + " nodes: " + nodes);	
+		System.out.println("Generated edges: " + edges + " nodes: " + nodes + " inactive: " + inactive);	
 	}
 	
-	public void addBarrier(int llx, int lly, int urx, int ury) {
-		Barrier b = new Barrier(llx,lly,urx,ury);
+	public void addBarrier(int llx, int lly, int urx, int ury, int L) {
+		Barrier b = new Barrier(llx,lly,urx,ury,L);
 		barriers.add(b);
 	}
 	
 	public Node addNode(int i, Point p) {
 		Node n = new Node(i,p);
-		map.add(i, n);
+		map.put(i, n);
 		return n;
 	}
 	
@@ -262,8 +266,9 @@ class BiGraph {
 	
 	public void addEdges(int s, int t, int c) {		//(source, target, length in 1 based indexing)
 
-		s -= 1;
-		t -= 1;								//raw vertexes are 1 based, map indices are 0 based
+// map changed to hashmap now uses 1 based indexing
+//		s -= 1;
+//		t -= 1;								//raw vertexes are 1 based, map indices are 0 based
 		
 		Node source = map.get(s);
 		Node target = map.get(t);
@@ -554,14 +559,18 @@ public class DistWithCoords {
     		
     		BiGraph g = new BiGraph(W * H);
     		
+    		System.out.println("Graph parameters: W: " + W + " H: " + H + " L: " + L + " C: " + C);
     		
-    		g.addBarrier(4,4,4,10);			//set of inactive nodes
-    		g.addBarrier(1,10,9,10);
-    		g.addBarrier(9,7,9,13);
-    		g.addBarrier(7,7,17,7);
-    		g.addBarrier(5,13,15,13);
-    		g.addBarrier(10,3,13,6);
+    		g.addBarrier(4,4,4,10,L);			//set of inactive nodes
+    		g.addBarrier(1,10,9,10,L);
+    		g.addBarrier(9,7,9,13,L);
+    		g.addBarrier(7,7,17,7,L);
+    		g.addBarrier(5,13,15,13,L);
+    		g.addBarrier(10,3,13,6,L);
     		
+    		for(Barrier b : g.barriers) {
+    			System.out.println("barrier: (" + b.ll.x + ", " + b.ll.y + ", " + b.ur.x + ", " + b.ur.y + ")" );
+    		}
     		
     		long start = System.nanoTime();
     		g.genTestGraph(W, H, L, C);
