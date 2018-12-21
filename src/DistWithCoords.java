@@ -175,7 +175,8 @@ class BiGraph {
 	
 	public void genTestGraph(int W, int H, int L, int C) {
 
-		
+		int nodes = 0;
+		int edges = 0;
 		
 		//generate a complete grid of active and inactive nodes
 		for(int i = 1; i <= W; ++i) {
@@ -187,6 +188,7 @@ class BiGraph {
 						n.active = false;
 					}
 				}
+				++nodes;
 			}
 		}
 		
@@ -198,23 +200,27 @@ class BiGraph {
 				if(n.active) {
 					for(int ii = -1; ii <= 1; ++ii) {
 						for(int jj = -1; jj <= 1; ++jj) {
+							if(jj == 0 && ii == 0)	//no self loops
+								continue;
 							if(i + ii > 0 && j + jj > 0 && i + ii <= W && j + jj <= H) {
 								Node t = map.get(Node.nodeNumber(i + ii, j + jj, W));
 								if(t.active) {
 									if(ii * jj == 0) {
 										addEdges(n.index,t.index,L + (int)Math.ceil(Math.random() * L / C));
+										++edges;
 									} else {
 										addEdges(n.index,t.index,(L * 3) / 2 + (int)Math.ceil(Math.random() * L / C));
+										++edges;
 									}
 									
-								}	
+								}
 							}
 						}
 					}
 				}
 			}
 		}
-			
+		System.out.println("Generated edges: " + edges + " nodes: " + nodes);	
 	}
 	
 	public void addBarrier(int llx, int lly, int urx, int ury) {
@@ -568,6 +574,12 @@ public class DistWithCoords {
     		
     		//TODO: put test here use (3,2) & (7,12) initially then randomly generate active points
     		
+    		
+    		
+    		int strt = Node.nodeNumber(3, 2, W);
+    		int trgt = Node.nodeNumber(7, 12, W);
+    		
+    		System.out.println("Query start: " + strt + " target: " + trgt + " Distance: " + g.biAStar(strt, trgt));
     		
     		finish = System.nanoTime();
     		elapsed = (finish - start) / 1000000;
