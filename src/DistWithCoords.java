@@ -84,8 +84,26 @@ class Node {
 		return k;
 	}
 	
+	public double setK(Node start, Node finish, boolean astar) {
+		if(astar)
+			k = dist + pf(start, finish);
+		else
+			k = dist;
+		return k;
+	}
+	
 	public double setKr(Node start, Node finish) {
 		kr = distR + pf(finish, start);					//start = finish for reverse graph potential
+		return kr;
+	}
+	
+	public double setKr(Node start, Node finish, boolean astar) {
+		
+		if(astar)
+			kr = distR + pf(finish, start);					//start = finish for reverse graph potential
+		else
+			kr = distR;
+		
 		return kr;
 	}
 	
@@ -379,6 +397,59 @@ class BiGraph {
 		int dni = h.indexOf(dn);
 		minSiftUp(dni, h);
 	}
+	
+	private void decreaseKey(Node dn, long d, Node start, Node finish, ArrayList<Node> h, boolean astar) {
+		
+//		System.out.println(" decreaseKey i: " + i + " d: " + d);
+		
+		if(h == heapR) {
+			dn.distR = d;
+			if(astar)
+				dn.setKr(start, finish);
+			else
+				dn.setKr(start, finish, false);
+		} else {
+			dn.dist = d;
+			if(astar)
+				dn.setK(start, finish);
+			else
+				dn.setK(start, finish, false);
+		}
+		int dni = h.indexOf(dn);
+		minSiftUp(dni, h);
+	}
+	
+	private void decreaseKey(Node dn, long d, Node start, Node finish, ArrayList<Node> h, boolean astar, boolean biDirectional) {
+		
+//		System.out.println(" decreaseKey i: " + i + " d: " + d);
+		if(biDirectional) {
+			if(h == heapR) {
+				dn.distR = d;
+				if(astar)
+					dn.setKr(start, finish);
+				else
+					dn.setKr(start, finish, false);
+			} else {
+				dn.dist = d;
+				if(astar)
+					dn.setK(start, finish);
+				else
+					dn.setK(start, finish, false);
+			}
+			int dni = h.indexOf(dn);
+			minSiftUp(dni, h);
+		} else {
+			h = heap;							//if not bidirectional default to the forward direction
+			dn.dist = d;
+			if(astar)
+				dn.setK(start, finish);
+			else
+				dn.setK(start, finish, false);
+			int dni = h.indexOf(dn);
+			minSiftUp(dni, h);
+		}
+		
+	}
 
     
     private void swap(int i, int n, ArrayList<Node> h) {
@@ -538,6 +609,90 @@ class BiGraph {
 //		System.out.println("BiDijkstra processed edges: " + processed + " ms: " + elapsed);
 		return result;
     }
+	
+	public long dijkstra(int s, int t) {
+		
+		//this is a checking method using the simple Dijkstra algorithm for testing
+		
+		
+		double prt = 0;									//in simple Dijkstra there is no potential
+		long mu = INFINITY;
+		
+		initializeQueues();
+		resetWorkingNodes();
+		Node sn = map.get(s);
+		Node tn = map.get(t);
+		
+		sn.dist = 0;
+		sn.setK(sn, tn, false);							//false => don't use the A* potential in the K value
+	
+		enQueue(sn, heap);
+		sn.queued = true;
+		working.add(sn);								//add the initial nodes to the working set
+	
+		long result = -1;								//if after processing all nodes in the graph this is unchanged the target is unreachable	
+		
+		if(s == t) {
+			return 0;									//I found myself!!
+		}
+		
+		
+	
+		while(!heap.isEmpty()) {						//process the next node in the forward graph
+			
+			Node processing = getMin(heap);
+			processing.queued = false;
+			
+//				System.out.println("processing Node: " + processing.index);
+			
+			for(Edge e : graph.get(processing.index)) {
+				
+				Node tt = e.v;	//TODO: && !processed ???
+				
+				long td = processing.dist + e.length;
+			
+				if(tt.dist > td) {
+						
+						working.add(tt);
+						
+						if(tt.queued == false) {	
+							tt.dist = td;
+							tt.setK(sn, tn, false);
+							enQueue(tt, heap);
+							tt.queued = true;
+						} else {
+							decreaseKey(tt, td, sn, tn, heap, false, false);		//use the unidirectional non potential version of the method
+						}
+
+//						tt.pindex = processing.index;				//min path is my daddy
+				}
+//					++processed;
+			}
+			
+			processing.processed = true;
+			
+			//TODO: implement a stopping criteria compatible with the single direction non potential algorithm
+			
+			if(processing.processedR == true) {				
+				long tp = processing.dist + processing.distR;
+				if( tp < mu) {
+					mu = tp; 
+					result = mu;
+				}
+				if(!heap.isEmpty()) {
+					if(heap.get(0).k + heapR.get(0).kr > mu + prt) {	//stop when the shortest queued nodes have estimated paths longer than the shortest one found
+						break;
+					}
+				}
+
+									
+			}
+				
+		}
+		
+		return mu;
+
+	}
 }
 
 
