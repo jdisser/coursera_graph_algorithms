@@ -399,7 +399,7 @@ class BiGraph {
     	return d + cDist;					//convert the potential distance into the real distance
     }
 	
-	public long biAStar(int s, int t) {	//s & t are 0 indexed inegers from the graph data
+	public long biAStar(int s, int t) {	//s & t are 0 indexed integers from the graph data
 		
 		//implements  bidirectional A* algorithm
 //		long start = System.nanoTime();	
@@ -611,9 +611,9 @@ public class DistWithCoords {
 	        int n = in.nextInt();
 	        int m = in.nextInt();
 	        
-	        BiGraph g = new BiGraph(n);
+	        BiGraph g = new BiGraph(n + 1);
 	
-	        for (int i = 0; i < n; i++) { 
+	        for (int i = 1; i <= n; i++) { 
 	            int x, y;
 	            x = in.nextInt();
 	            y = in.nextInt();
@@ -640,7 +640,7 @@ public class DistWithCoords {
 	            int u, v;
 	            u = in.nextInt();
 	            v = in.nextInt();
-	            System.out.println(g.biAStar(u-1, v-1));
+	            System.out.println(g.biAStar(u, v));
 	        }
 	        in.close();
 	    }
