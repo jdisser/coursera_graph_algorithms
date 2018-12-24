@@ -628,9 +628,7 @@ class BiGraph {
 	
 		enQueue(sn, heap);
 		sn.queued = true;
-		working.add(sn);								//add the initial nodes to the working set
-	
-		long result = -1;								//if after processing all nodes in the graph this is unchanged the target is unreachable	
+		working.add(sn);								//add the initial nodes to the working set	
 		
 		if(s == t) {
 			return 0;									//I found myself!!
@@ -644,53 +642,52 @@ class BiGraph {
 			processing.queued = false;
 			
 //				System.out.println("processing Node: " + processing.index);
-			
-			for(Edge e : graph.get(processing.index)) {
+			if(processing != tn) {
+				for(Edge e : graph.get(processing.index)) {
+					
+					Node tt = e.v;	//TODO: && !processed ???
+					
+					long td = processing.dist + e.length;
 				
-				Node tt = e.v;	//TODO: && !processed ???
-				
-				long td = processing.dist + e.length;
-			
-				if(tt.dist > td) {
-						
-						working.add(tt);
-						
-						if(tt.queued == false) {	
-							tt.dist = td;
-							tt.setK(sn, tn, false);
-							enQueue(tt, heap);
-							tt.queued = true;
-						} else {
-							decreaseKey(tt, td, sn, tn, heap, false, false);		//use the unidirectional non potential version of the method
-						}
+					if(tt.dist > td) {
+							
+							working.add(tt);
+							
+							if(tt.queued == false) {	
+								tt.dist = td;
+								tt.setK(sn, tn, false);
+								enQueue(tt, heap);
+								tt.queued = true;
+							} else {
+								decreaseKey(tt, td, sn, tn, heap, false, false);		//use the unidirectional non potential version of the method
+							}
 
-//						tt.pindex = processing.index;				//min path is my daddy
+//							tt.pindex = processing.index;				//min path is my daddy
+					}
+//						++processed;
 				}
-//					++processed;
+				
+				processing.processed = true;
+				
+			} else {							//processing the target node here
+				
+				if(processing.dist < mu)
+					mu = processing.dist;
+				processing.processed = true;
 			}
-			
-			processing.processed = true;
-			
+		
 			//TODO: implement a stopping criteria compatible with the single direction non potential algorithm
 			
-			if(processing.processedR == true) {				
-				long tp = processing.dist + processing.distR;
-				if( tp < mu) {
-					mu = tp; 
-					result = mu;
-				}
+			if(tn.processed == true) {				
 				if(!heap.isEmpty()) {
-					if(heap.get(0).k + heapR.get(0).kr > mu + prt) {	//stop when the shortest queued nodes have estimated paths longer than the shortest one found
+					if(heap.get(0).k > mu) {	//stop when the shortest queued node distance is longer than the shortest path found
 						break;
 					}
 				}
-
-									
-			}
-				
+			}				
 		}
 		
-		return mu;
+		return mu == INFINITY? -1: mu;
 
 	}
 }
