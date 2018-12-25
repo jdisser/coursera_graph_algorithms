@@ -740,17 +740,29 @@ public class DistWithCoords {
     		int strt = Node.nodeNumber(3, 2, W);
     		int trgt = Node.nodeNumber(7, 12, W);
     		
-    		System.out.println("Query start: " + strt + " target: " + trgt + " Distance: " + g.biAStar(strt, trgt));
+    		System.out.println("biAStar start: " + strt + " target: " + trgt + " Distance: " + g.biAStar(strt, trgt));
     		
     		finish = System.nanoTime();
     		elapsed = (finish - start) / 1000000;
+    		System.out.println("biAStar time: " + elapsed + " ms" );
     		
     		//TODO: add biDijkstra and Dijkstra with runtime on the same graph/query
+    		
+    		start = System.nanoTime();
+    		
+    		
+    		System.out.println("dijkstra start: " + strt + " target: " + trgt + " Distance: " + g.dijkstra(strt, trgt));
+    		
+    		finish = System.nanoTime();
+    		elapsed = (finish - start) / 1000000;
+    		System.out.println("dijkstra time: " + elapsed + " ms" );    		
+    		
+    		
     		//TODO: print out number of nodes processed and result with match/mismatch and proessing time
     		
     		
     		
-    		System.out.println("Query time: " + elapsed + " ms" );
+
     		
     		
     		
