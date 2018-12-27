@@ -56,6 +56,7 @@ class Node {
 	public boolean queuedR;
 	public boolean active;
 	public int pindex;
+	public int pindexR;
 	public Point coord;
 	
 	public Node(int i, Point coord) {
@@ -67,6 +68,7 @@ class Node {
         this.queued = false;
         this.queuedR = false;
         this.pindex = -1;
+        this.pindexR  = -1;
         this.coord = coord;
         this.active = true;
 	}
@@ -78,6 +80,8 @@ class Node {
         this.processedR = false;
         this.queued = false;
         this.queuedR = false;
+        this.pindex = -1;
+        this.pindexR = -1;
 	}
 	
 	private double pf(Node start, Node finish) {
@@ -169,6 +173,7 @@ class BiGraph {
 
 	
 	public int root;
+	public int cNode;
 	public int n;
 	public long mu = INFINITY;
 
@@ -194,6 +199,7 @@ class BiGraph {
         }
         
         this.root = -1;
+        this.cNode = -1;
         
         this.barriers = new ArrayList<Barrier>();
 
@@ -278,6 +284,7 @@ class BiGraph {
 			}
 			working.clear();
 		}
+		
 	}
 	
 	public void enQueue(Node n, ArrayList<Node> h) {
@@ -489,14 +496,19 @@ class BiGraph {
 		
 		initializeQueues();
 		resetWorkingNodes();
+		
+		cNode = -1;
+		
 		Node sn = map.get(s);
 		Node tn = map.get(t);
 		
 		sn.dist = 0;
 		sn.setK(sn, tn);
+		sn.pindex = sn.index;
 		
 		tn.distR = 0;
 		tn.setKr(sn, tn);
+		tn.pindexR = tn.index;
 		
 		prt = tn.kr;									//reverse potential of target since tn.distr = 0;
 		
@@ -505,7 +517,8 @@ class BiGraph {
 		enQueue(tn, heapR);
 		tn.queuedR = true;	
 		working.add(sn);								//add the initial nodes to the working set
-		working.add(tn);	
+		working.add(tn);
+		
 		long result = -1;								//if after processing all nodes in the graph this is unchanged the target is unreachable
 		
 		
@@ -541,7 +554,7 @@ class BiGraph {
 								decreaseKey(tt, td, sn, tn, heap);
 							}
 
-//						tt.pindex = processing.index;				//min path is my daddy
+						tt.pindex = processing.index;				//min path is my daddy
 					}
 //					++processed;
 				}
@@ -553,9 +566,10 @@ class BiGraph {
 					if( tp < mu) {
 						mu = tp; 
 						result = mu;
+						cNode = processing.index;
 					}
 					if(!heap.isEmpty()) {
-						if(heap.get(0).k + heapR.get(0).kr > mu + prt) {	//stop when the shortest queued nodes have estimated paths longer than the shortest one found
+						if(heap.get(0).k > mu && heapR.get(0).kr > mu) {
 							break;
 						}
 					}
@@ -590,7 +604,7 @@ class BiGraph {
 								decreaseKey(ttr, tdr, sn, tn, heapR);
 							}
 					
-//						ttr.pindex = rr.index;
+						ttr.pindexR = processingR.index;
 					}
 //					++processed;
 				}
@@ -602,7 +616,7 @@ class BiGraph {
 						result = mu;
 					}
 					if(!heapR.isEmpty()) {
-						if(heap.get(0).k + heapR.get(0).kr > mu + prt) {
+						if(heap.get(0).k > mu && heapR.get(0).kr > mu) {
 							break;
 						}
 					}
@@ -628,6 +642,9 @@ class BiGraph {
 		
 		initializeQueues();
 		resetWorkingNodes();
+		
+		cNode = -1;
+		
 		Node sn = map.get(s);
 		Node tn = map.get(t);
 		
