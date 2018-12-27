@@ -643,7 +643,7 @@ class BiGraph {
 		}
 //		long finish = System.nanoTime();
 //		long elapsed = (finish - start) / 1000000;
-		System.out.println("BiAStar double processed nodes: " + dblProcessed);
+//		System.out.println("BiAStar double processed nodes: " + dblProcessed);
 		return result;
     }
 	
