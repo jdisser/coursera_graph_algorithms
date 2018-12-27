@@ -773,9 +773,10 @@ public class DistWithCoords {
     			//to run a test file invoke the class with a path parameter ie: java DistWithCoords distTests/01
     			
     			String p = args[0];
+    			String pp = p + ".a";
     			
     			Path fp = Paths.get(p);
-    			Path ep = Paths.get(p, ".a");
+    			Path ep = Paths.get(pp);
     			Charset cset = Charset.forName("US-ASCII");
     			String s;
     			
@@ -822,6 +823,8 @@ public class DistWithCoords {
     				
     				int tests = Integer.valueOf(s);
     				
+    				System.out.println("Running tests: " + tests);
+    				
     				String[] expected = new String[tests];
     				
     				
@@ -842,7 +845,16 @@ public class DistWithCoords {
     					int start = Integer.valueOf(params[0]);
     					int target = Integer.valueOf(params[1]);
     					
-    					System.out.println("Test: " + k + " biAStar: " + g.biAStar(start, target) + " Dijkstra: " + g.dijkstra(start, target) + " Expected: " + expected[k]);
+    					long bistarDist = g.biAStar(start, target);
+    					long dijkstraDist = g.dijkstra(start, target);
+    					long expectedDist = Long.valueOf(expected[k]);
+    					
+    					System.out.println("Test: " + k + " biAStar: " + bistarDist + " Dijkstra: " + dijkstraDist + " Expected: " + expectedDist );
+    					if(bistarDist != expectedDist)
+    						System.out.println("NOT EXPECTED!!");
+    					if(bistarDist != dijkstraDist)
+    						System.out.println("NOT VERIFIED!!");
+    					
     				}
     				
     				
