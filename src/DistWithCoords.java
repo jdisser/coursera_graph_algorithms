@@ -176,6 +176,7 @@ class BiGraph {
 	public int cNode;
 	public int n;
 	public long mu = INFINITY;
+	public int processed;
 
 	
 	public BiGraph(int n) {
@@ -200,6 +201,8 @@ class BiGraph {
         
         this.root = -1;
         this.cNode = -1;
+        
+        this.processed = 0;
         
         this.barriers = new ArrayList<Barrier>();
 
@@ -475,21 +478,22 @@ class BiGraph {
     	
     }
     
-    private double shortestPath(double cDist) {
-    	double d = INFINITY;
-    	double dn = 0;
+    private long shortestPath() {
+    	long d = INFINITY;
+    	long dn = 0;
     	for(Node n: working) {
     		dn = n.dist + n.distR;
     		d = Math.min(d, dn);
     	}
-    	return d + cDist;					//convert the potential distance into the real distance
+    	return d;					
     }
 	
 	public long biAStar(int s, int t) {	//s & t are 0 indexed integers from the graph data
 		
 		//implements  bidirectional A* algorithm
 //		long start = System.nanoTime();	
-//		int processed = 0;
+		processed = 0;
+		int dblProcessed = 0;
 		
 		double prt;
 		long mu = INFINITY;
@@ -533,6 +537,7 @@ class BiGraph {
 				Node processing = getMin(heap);
 				processing.queued = false;
 				
+				
 //				System.out.println("processing Node: " + processing.index);
 				
 				for(Edge e : graph.get(processing.index)) {
@@ -556,13 +561,16 @@ class BiGraph {
 
 						tt.pindex = processing.index;				//min path is my daddy
 					}
-//					++processed;
+					
 				}
 				
 				processing.processed = true;
+				++processed;
 				
-				if(processing.processedR == true) {				
+				if(processing.processedR == true) {	
+					/*
 					long tp = processing.dist + processing.distR;
+					++dblProcessed;
 					if( tp < mu) {
 						mu = tp; 
 						result = mu;
@@ -570,10 +578,13 @@ class BiGraph {
 					}
 					if(!heap.isEmpty()) {
 						if(heap.get(0).k > mu && heapR.get(0).kr > mu) {
+							System.out.println("Exiting on break");
 							break;
 						}
 					}
-
+					 */
+					result = shortestPath();
+					break;
 										
 				}
 					
@@ -606,11 +617,14 @@ class BiGraph {
 					
 						ttr.pindexR = processingR.index;
 					}
-//					++processed;
+					
 				}
 				processingR.processedR = true;
+				++processed;
 				if(processingR.processed == true) {
+					/*
 					long tp = processingR.dist + processingR.distR;
+					++dblProcessed;
 					if( tp < mu) {
 						mu = tp;
 						result = mu;
@@ -620,15 +634,16 @@ class BiGraph {
 							break;
 						}
 					}
-
-					
+					*/
+					result = shortestPath();
+					break;
 				}
 			}
 			
 		}
 //		long finish = System.nanoTime();
 //		long elapsed = (finish - start) / 1000000;
-//		System.out.println("BiDijkstra processed edges: " + processed + " ms: " + elapsed);
+		System.out.println("BiAStar double processed nodes: " + dblProcessed);
 		return result;
     }
 	
@@ -639,6 +654,7 @@ class BiGraph {
 		
 		double prt = 0;									//in simple Dijkstra there is no potential
 		long mu = INFINITY;
+		processed = 0;
 		
 		initializeQueues();
 		resetWorkingNodes();
@@ -689,10 +705,11 @@ class BiGraph {
 
 //							tt.pindex = processing.index;				//min path is my daddy
 					}
-//						++processed;
+						
 				}
 				
 				processing.processed = true;
+				++processed;
 				
 			} else {							//processing the target node here
 				
@@ -711,7 +728,7 @@ class BiGraph {
 				}
 			}				
 		}
-		
+//		System.out.println("Dijkstra processed edges: " + processed);
 		return mu == INFINITY? -1: mu;
 
 	}
@@ -847,7 +864,8 @@ public class DistWithCoords {
     					e.printStackTrace();
     				}
     				
-    				
+    				int biAStarSum = 0;
+    				int dijkstraSum = 0;
     				
     				for(int k = 0; k < tests; ++k) {
     					s = br.readLine();
@@ -857,16 +875,22 @@ public class DistWithCoords {
     					int target = Integer.valueOf(params[1]);
     					
     					long bistarDist = g.biAStar(start, target);
+    					int bistarNodes = g.processed;
+    					biAStarSum += bistarNodes;
     					long dijkstraDist = g.dijkstra(start, target);
+    					int dijkstraNodes = g.processed;
+    					dijkstraSum += dijkstraNodes;
     					long expectedDist = Long.valueOf(expected[k]);
     					
-    					System.out.println("Test: " + k + " biAStar: " + bistarDist + " Dijkstra: " + dijkstraDist + " Expected: " + expectedDist );
+    					System.out.println("Test: " + k + " biAStar: " + bistarDist + " nodes: "+ bistarNodes + " Dijkstra: " + dijkstraDist + " nodes: "+ dijkstraNodes +" Expected: " + expectedDist );
     					if(bistarDist != expectedDist)
     						System.out.println("NOT EXPECTED!!");
     					if(bistarDist != dijkstraDist)
     						System.out.println("NOT VERIFIED!!");
     					
     				}
+    				
+    				System.out.println("BiAStar Sum: " + biAStarSum + " Dijkstra Sum: " + dijkstraSum);
     				
     				
     				
