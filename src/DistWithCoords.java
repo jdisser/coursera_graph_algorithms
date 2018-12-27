@@ -537,7 +537,7 @@ class BiGraph {
 				
 				for(Edge e : graph.get(processing.index)) {
 					
-					Node tt = e.v;	//TODO: && !processed ???
+					Node tt = e.v;	
 					
 					long td = processing.dist + e.length;
 				
@@ -588,7 +588,7 @@ class BiGraph {
 				
 				for(Edge er : graphR.get(processingR.index)) {
 			
-					Node ttr = er.v;		//TODO: && !processed ???
+					Node ttr = er.v;		
 					
 					long tdr = processingR.distR + er.length;
 				
@@ -670,7 +670,7 @@ class BiGraph {
 			if(processing != tn) {
 				for(Edge e : graph.get(processing.index)) {
 					
-					Node tt = e.v;	//TODO: && !processed ???
+					Node tt = e.v;	
 					
 					long td = processing.dist + e.length;
 				
@@ -701,7 +701,7 @@ class BiGraph {
 				processing.processed = true;
 			}
 		
-			//TODO: implement a stopping criteria compatible with the single direction non potential algorithm
+			
 			
 			if(tn.processed == true) {				
 				if(!heap.isEmpty()) {
@@ -742,7 +742,7 @@ public class DistWithCoords {
         		g.addBarrier(1,10,9,10,L);
         		g.addBarrier(9,7,9,13,L);
         		g.addBarrier(7,7,17,7,L);
-        		g.addBarrier(5,13,15,13,L);
+        		g.addBarrier(5,13,15,13,L);			//use (1,13,15,13,L) for unreachable
         		g.addBarrier(10,3,13,6,L);
         		
         		for(Barrier b : g.barriers) {
@@ -758,10 +758,6 @@ public class DistWithCoords {
         		
         		start = System.nanoTime();
         		
-        		//TODO: put test here use (3,2) & (7,12) initially then randomly generate active points
-        		
-        		
-        		
         		int strt = Node.nodeNumber(3, 2, W);
         		int trgt = Node.nodeNumber(7, 12, W);
         		
@@ -771,7 +767,6 @@ public class DistWithCoords {
         		elapsed = (finish - start) / 1000000;
         		System.out.println("biAStar time: " + elapsed + " ms" );
         		
-        		//TODO: add biDijkstra and Dijkstra with runtime on the same graph/query
         		
         		start = System.nanoTime();
         		
@@ -783,7 +778,6 @@ public class DistWithCoords {
         		System.out.println("dijkstra time: " + elapsed + " ms" );    		
         		
         		
-        		//TODO: print out number of nodes processed and result with match/mismatch and proessing time
 
     		} else {
     			
@@ -883,7 +877,7 @@ public class DistWithCoords {
 
     		}
    		
-    	} else {
+    	} else {		//no initial parameter passed
     	
     	
     	
