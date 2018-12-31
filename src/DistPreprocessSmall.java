@@ -3,6 +3,100 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.PriorityQueue;
 
+class Node {
+	private static final long INFINITY = Long.MAX_VALUE/4;
+	public int index;				//this is the map index for back reference
+	public long dist;				//this is the distance from the source in the graph
+	public long distR;				//this is the distance from the target in the reverse graph
+	public boolean processed;
+	public boolean processedR;
+	public boolean queued;
+	public boolean queuedR;
+	public boolean active;
+	public boolean contracted;
+	public int pindex;
+	public int pindexR;
+	public long level;
+	public long importance;
+	
+	
+	
+	public Node(int i) {
+        this.index = i;
+        this.dist = INFINITY;
+        this.distR = INFINITY;
+        this.processed = false;
+        this.processedR = false;
+        this.queued = false;
+        this.queuedR = false;
+        this.contracted = false;
+        this.pindex = -1;
+        this.pindexR  = -1;
+        this.active = true;
+        this.level = 0;
+        this.importance = 0;
+	}
+	
+	public void resetNode() {
+		this.dist = INFINITY;
+        this.distR = INFINITY;
+        this.processed = false;
+        this.processedR = false;
+        this.queued = false;
+        this.queuedR = false;
+        this.pindex = -1;
+        this.pindexR = -1;
+	}
+
+	
+	public static int nodeNumber(int i, int j, int w) {	//1 index position of node in test graph w x h
+		return w*(j - 1) + i;
+	}
+}
+
+class Edge {
+	public int target;
+	public int source;
+	public long length;
+	public Node u;
+	public Node v;
+	public Node cn;				//shortcut u--cn-->v
+	public boolean shortcut;
+	
+	
+	public Edge(Node u, Node v, int l, boolean shortcut) {
+		this.target = u.index;
+		this.source = v.index;
+		this.u = u;
+		this.v = v;
+		this.length = l;
+		this.shortcut = shortcut;
+	}
+	
+	//shortcut constructor u-->v-->w => u --> v(was w) & cn <- v
+	public Edge(Node u, Node v, Node w, long l) {
+		
+		this.u = u;
+		this.v = w;
+		this.cn = v;
+		this.length = l;
+	}
+	
+	//Edge constructor u --> v && l(u,v) = l
+	public Edge(Node u, Node v, long l) {
+		this.u = u;
+		this.v = v;
+		this.cn = null;
+		this.length = l;
+	}
+
+
+	
+	
+	
+}
+
+
 public class DistPreprocessSmall {
     private static class Impl {
         // See the descriptions of these fields in the starter for friend_suggestion
