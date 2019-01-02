@@ -1,4 +1,10 @@
 import java.util.Scanner;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -767,7 +773,9 @@ public class DistPreprocessSmall {
         }
     }
 
-    public static void main(String args[]) {
+    
+    //original main method in starter
+    public static void orgMain(String args[]) {
         Scanner in = new Scanner(System.in);
         int n = in.nextInt();
         int m = in.nextInt();
@@ -814,5 +822,210 @@ public class DistPreprocessSmall {
             v = in.nextInt();
             System.out.println(ch.query(u-1, v-1));
         }
+    }
+    
+    public static void main(String args[]) {
+    	
+		
+    	
+    	if(args.length != 0) {
+
+    		if(args[0].equals("test")) {
+    			int W = 19;						//node grid W x H
+        		int H = 15;
+        		int L = 32;						//node spacing
+        		int C = 4;						//random edge extension factor (L / C)
+        		
+        		BiGraph g = new BiGraph(W * H);
+        		
+        		System.out.println("Graph parameters: W: " + W + " H: " + H + " L: " + L + " C: " + C);
+        		
+        		g.addBarrier(4,4,4,10,L);			//set of inactive nodes
+        		g.addBarrier(1,10,9,10,L);
+        		g.addBarrier(9,7,9,13,L);
+        		g.addBarrier(7,7,17,7,L);
+        		g.addBarrier(5,13,15,13,L);			//use (1,13,15,13,L) for unreachable
+        		g.addBarrier(10,3,13,6,L);
+        		
+        		for(Barrier b : g.barriers) {
+        			System.out.println("barrier: (" + b.ll.x + ", " + b.ll.y + ", " + b.ur.x + ", " + b.ur.y + ")" );
+        		}
+        		
+        		long start = System.nanoTime();
+        		g.genTestGraph(W, H, L, C);
+        		long finish = System.nanoTime();
+        		long elapsed = (finish - start)/1000000;
+        		
+        		System.out.println("Graph generation time: " + elapsed + " ms" );
+        		
+        		start = System.nanoTime();
+        		
+        		int strt = Node.nodeNumber(3, 2, W);
+        		int trgt = Node.nodeNumber(7, 12, W);
+        		
+        		System.out.println("biAStar start: " + strt + " target: " + trgt + " Distance: " + g.biAStar(strt, trgt));
+        		
+        		finish = System.nanoTime();
+        		elapsed = (finish - start) / 1000000;
+        		System.out.println("biAStar time: " + elapsed + " ms" );
+        		
+        		
+        		start = System.nanoTime();
+        		
+        		
+        		System.out.println("dijkstra start: " + strt + " target: " + trgt + " Distance: " + g.dijkstra(strt, trgt));
+        		
+        		finish = System.nanoTime();
+        		elapsed = (finish - start) / 1000000;
+        		System.out.println("dijkstra time: " + elapsed + " ms" );    		
+        		
+        		
+
+    		} else {
+    			
+    			//to run a test file invoke the class with a path parameter ie: java DistWithCoords distTests/01
+    			
+    			String p = args[0];
+    			String pp = p + ".a";
+    			
+    			Path fp = Paths.get(p);
+    			Path ep = Paths.get(pp);
+    			Charset cset = Charset.forName("US-ASCII");
+    			String s;
+    			
+    			
+    			try(BufferedReader br = Files.newBufferedReader(fp, cset)){
+    				s = br.readLine();
+    				String[] params = s.split(" ");
+    				int n = Integer.valueOf(params[0]);
+    				int m = Integer.valueOf(params[1]);
+    				
+    				BiGraph g = new BiGraph(n + 1);
+    				
+    				System.out.println("Running file: " + fp.toString());
+    				System.out.println("Points: " + n + " Edges: " + m);
+    				
+    				int points = 0;
+    				
+    				
+    				for(int i = 1; i <= n; ++i){
+    					s = br.readLine();
+    					params = s.split(" ");
+    					
+    					Point pnt = new Point(Integer.valueOf(params[0]) , Integer.valueOf(params[1]));
+    		            g.addNode(i, pnt);
+    		            ++points;
+    					
+    				}
+    				
+    				System.out.println("Generated points: " + points);
+    				
+    				int edges = 0;
+    				
+    				for(int j = 1; j <= m; ++j) {
+    					s = br.readLine();
+    					params = s.split(" ");
+    					
+    					g.addEdges(Integer.valueOf(params[0]), Integer.valueOf(params[1]), Integer.valueOf(params[2]));
+    					++edges;
+    				}
+    				
+    				System.out.println("Generated edges: " + edges);
+    				
+    				s = br.readLine();
+    				
+    				int tests = Integer.valueOf(s);
+    				
+    				System.out.println("Running tests: " + tests);
+    				
+    				String[] expected = new String[tests];
+    				
+    				
+    				try(BufferedReader bre = Files.newBufferedReader(ep, cset)){
+    					for(int jj = 0; jj < tests; ++jj) {
+    						expected[jj] = bre.readLine();
+    					}
+    				} catch (IOException e) {
+    					e.printStackTrace();
+    				}
+    				
+    				int biAStarSum = 0;
+    				int dijkstraSum = 0;
+    				
+    				for(int k = 0; k < tests; ++k) {
+    					s = br.readLine();
+    					params = s.split(" ");
+    					
+    					int start = Integer.valueOf(params[0]);
+    					int target = Integer.valueOf(params[1]);
+    					
+    					long bistarDist = g.biAStar(start, target);
+    					int bistarNodes = g.processed;
+    					biAStarSum += bistarNodes;
+    					long dijkstraDist = g.dijkstra(start, target);
+    					int dijkstraNodes = g.processed;
+    					dijkstraSum += dijkstraNodes;
+    					long expectedDist = Long.valueOf(expected[k]);
+    					
+    					System.out.println("Test: " + k + " biAStar: " + bistarDist + " nodes: "+ bistarNodes + " Dijkstra: " + dijkstraDist + " nodes: "+ dijkstraNodes +" Expected: " + expectedDist );
+    					if(bistarDist != expectedDist)
+    						System.out.println("NOT EXPECTED!!");
+    					if(bistarDist != dijkstraDist)
+    						System.out.println("NOT VERIFIED!!");
+    					
+    				}
+    				
+    				System.out.println("BiAStar Sum: " + biAStarSum + " Dijkstra Sum: " + dijkstraSum);
+    				
+    				
+    				
+    			} catch (IOException e) {
+    				e.printStackTrace();
+    			}
+    			
+
+    		}
+   		
+    	} else {		//no initial parameter passed
+    	
+    	
+    	
+	        Scanner in = new Scanner(System.in);
+	        int n = in.nextInt();
+	        int m = in.nextInt();
+	        
+	        BiGraph g = new BiGraph(n + 1);
+	
+	        for (int i = 1; i <= n; i++) { 
+	            int x, y;
+	            x = in.nextInt();
+	            y = in.nextInt();
+	            
+	            Point p = new Point(x , y);
+	            g.addNode(i, p);
+	
+	        }
+	
+	        for (int i = 0; i < m; i++) {
+	            int x, y, c;
+	            x = in.nextInt();
+	            y = in.nextInt();
+	            c = in.nextInt();
+	            
+	            g.addEdges(x, y, c);
+	            
+	 
+	        }
+	
+	        int t = in.nextInt();
+	
+	        for (int i = 0; i < t; i++) {
+	            int u, v;
+	            u = in.nextInt();
+	            v = in.nextInt();
+	            System.out.println(g.biAStar(u, v));
+	        }
+	        in.close();
+	    }
     }
 }
