@@ -630,6 +630,62 @@ class BiGraph {
 	}
 }
 
+class tableHash{
+	
+	ArrayList<ArrayList<Integer>> hashTable;
+	ArrayList<Integer> masks;
+	
+	int bits;
+	int r;
+	int k;
+	
+	
+	public tableHash(int bits, int r) {
+		
+		this.bits = bits;
+		this.r = r;
+		
+		this.hashTable = new ArrayList<ArrayList<Integer>>();
+		for(int i = 0; i < r; ++i) {
+			this.hashTable.add(new ArrayList<Integer>());
+		}
+		
+		int m = 2 ^ bits;
+		this.k = bits/r;
+		
+		for(int i = 0; i < r; ++i) {
+			
+			ArrayList<Integer> l = hashTable.get(i);
+			
+			for(int j = 0; j < k; ++j) {
+				l.add(Long.valueOf((Math.round(Math.random() * m))).intValue());
+			}
+		}
+		
+		masks = new ArrayList<Integer>();
+		
+		for(int i = 0; i < r; ++i) {
+			int msk = (2^k - 1) << k * i;
+			masks.add(i, msk);
+		}
+		
+		
+	}
+	
+	public int hash(int x) {
+		
+		int result = 0;
+		
+		for(int i = 0; i < r; ++i) {
+			result ^= hashTable.get(i).get((x & masks.get(i)) >> k * i);
+		}
+		
+		return result;
+		
+		
+	}
+	
+}
 
 public class DistPreprocessSmall {
     private static class Impl {
