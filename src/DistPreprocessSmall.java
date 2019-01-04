@@ -20,12 +20,15 @@ class Node {
 	public boolean processedR;
 	public boolean queued;
 	public boolean queuedR;
-	public boolean active;
-	public boolean contracted;
-	public int pindex;
-	public int pindexR;
-	public long level;
-	public long importance;
+	public boolean active;			//graph state false => not available in graph
+	public boolean contracted;		//contracted state true => contracted
+	public int pindex;				//index of parent
+	public int pindexR;				//index of reverse parent
+	public int level;				//contraction hueristic
+	public int priority;			//priority for contraction
+	public int neighbors;			//number of contracted neighbors
+	public int rank;				//order of node in contracted graph
+	public int edgeDiff;			//shortcuts - inDegree - outDegree
 	
 	
 	
@@ -42,7 +45,10 @@ class Node {
         this.pindexR  = -1;
         this.active = true;
         this.level = 0;
-        this.importance = 0;
+        this.priority = 0;
+        this.neighbors = 0;
+        this.rank = 0;
+        this.edgeDiff = 0;
 	}
 	
 	public void resetNode() {
@@ -650,7 +656,7 @@ class tableHash{
 			this.hashTable.add(new ArrayList<Integer>());
 		}
 		
-		int m = 2 ^ bits;
+		int m = 2 ^ (bits + 1) - 1;
 		this.k = bits/r;
 		
 		for(int i = 0; i < r; ++i) {
@@ -688,197 +694,6 @@ class tableHash{
 }
 
 public class DistPreprocessSmall {
-    private static class Impl {
-        // See the descriptions of these fields in the starter for friend_suggestion
-        int n;
-        ArrayList<Integer>[][] adj;
-        ArrayList<Long>[][] cost;
-        Long[][] distance;
-        ArrayList<PriorityQueue<Entry>> queue;
-        boolean[] visited;
-        ArrayList<Integer> workset;
-        final Long INFINITY = Long.MAX_VALUE / 4;
- 
-        // Position of the node in the node ordering
-        Integer[] rank;
-        // Level of the node for level heuristic in the node ordering
-        Long[] level;
-
-        Impl(int n) {
-            this.n = n;
-            visited = new boolean[n];
-            Arrays.fill(visited, false);
-            workset = new ArrayList<Integer>();
-            rank = new Integer[n];
-            level = new Long[n];
-            distance = new Long[][] {new Long[n], new Long[n]};
-            for (int i = 0; i < n; ++i) {
-                distance[0][i] = distance[1][i] = INFINITY;
-                level[i] = 0L;
-                rank[i] = 0;
-            }
-            queue = new ArrayList<PriorityQueue<Entry>>();
-            queue.add(new PriorityQueue<Entry>(n));
-            queue.add(new PriorityQueue<Entry>(n));
-        }
-
-        // Preprocess the graph
-        void preprocess() {
-            // This priority queue will contain pairs (importance, node) with the least important node in the head
-            PriorityQueue<Entry> q = new PriorityQueue<Entry>(n);
-            // Implement this method yourself
-        }
-
-        void add_edge(int side, int u, int v, Long c) {
-            for (int i = 0; i < adj[side][u].size(); ++i) {
-                int w = adj[side][u].get(i);
-                if (w == v) {
-                    Long cc = min(cost[side][u].get(i), c);
-                    cost[side][u].set(i, cc);
-                    return;
-                }
-            }
-            adj[side][u].add(v);
-            cost[side][u].add(c);
-        }
-
-        void apply_shortcut(Shortcut sc) {
-            add_edge(0, sc.u, sc.v, sc.cost);
-            add_edge(1, sc.v, sc.u, sc.cost);
-        }
-
-        void clear() {
-            for (int v : workset) {
-                distance[0][v] = distance[1][v] = INFINITY;
-                visited[v] = false;
-            }
-            workset.clear();
-            queue.get(0).clear();
-            queue.get(1).clear();
-        }
-
-        void mark_visited(int u) {
-            visited[u] = true;
-            workset.add(u);
-        }
-
-        // See the description of this method in the starter for friend_suggestion
-        boolean visit(int side, int v, Long dist) {
-            // Implement this method yourself
-            return false;
-        }                
-
-        // Add the shortcuts corresponding to contracting node v. Return v's importance.
-        Long shortcut(int v) {
-            // Implement this method yourself
-
-            // Compute the node importance in the end
-            Long shortcuts = 0;
-            Long vlevel = 0L;
-            Long neighbors = 0L;
-            Long shortcutCover = 0L;
-            // Compute the correct values for the above heuristics before computing the node importance
-            Long importance = (shortcuts - adj[0][v].size() - adj[1][v].size()) + neighbors + shortcutCover + vlevel;
-            return importance;
-        }
-
-        // Returns the distance from s to t in the graph
-        Long query(int s, int t) {
-            if (s == t) {
-                return 0L;
-            }
-            visit(0, s, 0L);
-            visit(1, t, 0L);
-            Long estimate = INFINITY;
-            // Implement the rest of the algorithm yourself
-            return estimate == INFINITY ? -1 : estimate;            
-        }
-
-        class Entry implements Comparable<Entry>
-        {
-            Long cost;
-            int node;
-          
-            public Entry(Long cost, int node)
-            {
-                this.cost = cost;
-                this.node = node;
-            }
-         
-            public int compareTo(Entry other)
-            {
-                if (cost == other.cost) {
-                    return node < other.node ? -1 : node > other.node ? 1: 0;
-                }
-                return cost < other.cost ? -1 : cost > other.cost ? 1 : 0;
-            }
-        }
-
-        class Shortcut
-        {
-            int u;
-            int v;
-            Long cost;
-
-            public Shortcut(int u, int v, Long c)
-            {
-                this.u = u;
-                this.v = v;
-                cost = c;
-            }
-        }
-    }
-
-    
-    //original main method in starter
-    public static void orgMain(String args[]) {
-        Scanner in = new Scanner(System.in);
-        int n = in.nextInt();
-        int m = in.nextInt();
-        Impl ch = new Impl(n);
-        @SuppressWarnings("unchecked")
-        ArrayList<Integer>[][] tmp1 = (ArrayList<Integer>[][])new ArrayList[2][];
-        ch.adj = tmp1;
-        @SuppressWarnings("unchecked")
-        ArrayList<Long>[][] tmp2 = (ArrayList<Long>[][])new ArrayList[2][];
-        ch.cost = tmp2;
-        for (int side = 0; side < 2; ++side) {
-            @SuppressWarnings("unchecked")
-            ArrayList<Integer>[] tmp3 = (ArrayList<Integer>[])new ArrayList[n];
-            ch.adj[side] = tmp3;
-            @SuppressWarnings("unchecked")
-            ArrayList<Long>[] tmp4 = (ArrayList<Long>[])new ArrayList[n];
-            ch.cost[side] = tmp4;
-            for (int i = 0; i < n; i++) {
-                ch.adj[side][i] = new ArrayList<Integer>();
-                ch.cost[side][i] = new ArrayList<Long>();
-            }
-        }
-
-        for (int i = 0; i < m; i++) {
-            int x, y;
-            Long c;
-            x = in.nextInt();
-            y = in.nextInt();
-            c = in.nextLong();
-            ch.adj[0][x - 1].add(y - 1);
-            ch.cost[0][x - 1].add(c);
-            ch.adj[1][y - 1].add(x - 1);
-            ch.cost[1][y - 1].add(c);
-        }
-
-        ch.preprocess();
-        System.out.println("Ready");
-
-        int t = in.nextInt();
-
-        for (int i = 0; i < t; i++) {
-            int u, v;
-            u = in.nextInt();
-            v = in.nextInt();
-            System.out.println(ch.query(u-1, v-1));
-        }
-    }
     
     public static void main(String args[]) {
     	
@@ -886,59 +701,8 @@ public class DistPreprocessSmall {
     	
     	if(args.length != 0) {
 
-    		if(args[0].equals("test")) {
-    			int W = 19;						//node grid W x H
-        		int H = 15;
-        		int L = 32;						//node spacing
-        		int C = 4;						//random edge extension factor (L / C)
-        		
-        		BiGraph g = new BiGraph(W * H);
-        		
-        		System.out.println("Graph parameters: W: " + W + " H: " + H + " L: " + L + " C: " + C);
-        		
-        		g.addBarrier(4,4,4,10,L);			//set of inactive nodes
-        		g.addBarrier(1,10,9,10,L);
-        		g.addBarrier(9,7,9,13,L);
-        		g.addBarrier(7,7,17,7,L);
-        		g.addBarrier(5,13,15,13,L);			//use (1,13,15,13,L) for unreachable
-        		g.addBarrier(10,3,13,6,L);
-        		
-        		for(Barrier b : g.barriers) {
-        			System.out.println("barrier: (" + b.ll.x + ", " + b.ll.y + ", " + b.ur.x + ", " + b.ur.y + ")" );
-        		}
-        		
-        		long start = System.nanoTime();
-        		g.genTestGraph(W, H, L, C);
-        		long finish = System.nanoTime();
-        		long elapsed = (finish - start)/1000000;
-        		
-        		System.out.println("Graph generation time: " + elapsed + " ms" );
-        		
-        		start = System.nanoTime();
-        		
-        		int strt = Node.nodeNumber(3, 2, W);
-        		int trgt = Node.nodeNumber(7, 12, W);
-        		
-        		System.out.println("biAStar start: " + strt + " target: " + trgt + " Distance: " + g.biAStar(strt, trgt));
-        		
-        		finish = System.nanoTime();
-        		elapsed = (finish - start) / 1000000;
-        		System.out.println("biAStar time: " + elapsed + " ms" );
-        		
-        		
-        		start = System.nanoTime();
-        		
-        		
-        		System.out.println("dijkstra start: " + strt + " target: " + trgt + " Distance: " + g.dijkstra(strt, trgt));
-        		
-        		finish = System.nanoTime();
-        		elapsed = (finish - start) / 1000000;
-        		System.out.println("dijkstra time: " + elapsed + " ms" );    		
-        		
-        		
-
-    		} else {
-    			
+    		
+    			//TODO: rewrite this section to process the test graphs without the euclidian coordinates
     			//to run a test file invoke the class with a path parameter ie: java DistWithCoords distTests/01
     			
     			String p = args[0];
@@ -968,13 +732,13 @@ public class DistPreprocessSmall {
     					s = br.readLine();
     					params = s.split(" ");
     					
-    					Point pnt = new Point(Integer.valueOf(params[0]) , Integer.valueOf(params[1]));
-    		            g.addNode(i, pnt);
+    					
+    		            g.addNode(i);
     		            ++points;
     					
     				}
     				
-    				System.out.println("Generated points: " + points);
+    				System.out.println("Generated Nodes: " + points);
     				
     				int edges = 0;
     				
@@ -1008,6 +772,7 @@ public class DistPreprocessSmall {
     				int biAStarSum = 0;
     				int dijkstraSum = 0;
     				
+    				//TODO: rewrite this section to use the biDijkstraCh() method instead of the biStar
     				for(int k = 0; k < tests; ++k) {
     					s = br.readLine();
     					params = s.split(" ");
@@ -1040,7 +805,7 @@ public class DistPreprocessSmall {
     			}
     			
 
-    		}
+    		
    		
     	} else {		//no initial parameter passed
     	
@@ -1053,13 +818,7 @@ public class DistPreprocessSmall {
 	        BiGraph g = new BiGraph(n + 1);
 	
 	        for (int i = 1; i <= n; i++) { 
-	            int x, y;
-	            x = in.nextInt();
-	            y = in.nextInt();
-	            
-	            Point p = new Point(x , y);
-	            g.addNode(i, p);
-	
+	            g.addNode(i);
 	        }
 	
 	        for (int i = 0; i < m; i++) {
@@ -1073,13 +832,17 @@ public class DistPreprocessSmall {
 	 
 	        }
 	
+	        
+	        g.preprocess();
+	        System.out.println("Ready");
+	        
 	        int t = in.nextInt();
 	
 	        for (int i = 0; i < t; i++) {
 	            int u, v;
 	            u = in.nextInt();
 	            v = in.nextInt();
-	            System.out.println(g.biAStar(u, v));
+	            System.out.println(g.biDijkstraCh(u, v));
 	        }
 	        in.close();
 	    }
