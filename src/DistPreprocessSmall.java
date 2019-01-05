@@ -29,6 +29,8 @@ class Node {
 	public int neighbors;			//number of contracted neighbors
 	public int rank;				//order of node in contracted graph
 	public int edgeDiff;			//shortcuts - inDegree - outDegree
+	public long key;				//The key used in the priority queue
+	public long keyR;				//the reverse search key
 	
 	
 	
@@ -49,6 +51,8 @@ class Node {
         this.neighbors = 0;
         this.rank = 0;
         this.edgeDiff = 0;
+        this.key = 0;
+        this.keyR = 0;
 	}
 	
 	public void resetNode() {
@@ -60,12 +64,43 @@ class Node {
         this.queuedR = false;
         this.pindex = -1;
         this.pindexR = -1;
+        this.key = 0;
+        this.keyR = 0;
 	}
 
 	
 	public static int nodeNumber(int i, int j, int w) {	//1 index position of node in test graph w x h
 		return w*(j - 1) + i;
 	}
+	
+	public double setK(Node start, Node finish) {
+		key = dist ;
+		return key;
+	}
+	
+	public long setK(Node start, Node finish, boolean prioritize) {
+		if(prioritize)
+			key = priority;
+		else
+			key = dist;
+		return key;
+	}
+	
+	public double setKr(Node start, Node finish) {
+		keyR = distR;					//start = finish for reverse graph distance
+		return keyR;
+	}
+	
+	public double setKr(Node start, Node finish, boolean prioritize) {
+		
+		if(prioritize)
+			keyR = priority;					//start = finish for reverse graph distance
+		else
+			keyR = distR;
+		
+		return keyR;
+	}
+	
 }
 
 class Edge {
@@ -231,11 +266,11 @@ class BiGraph {
     	int left = 2*i + 1;
     	int rght = 2*i + 2;
     	
-    	if(h == heap) {
-    		if(left <= li && h.get(left).k < h.get(mini).k) {
+    	if(h == heap || h == preProc) {
+    		if(left <= li && h.get(left).key < h.get(mini).key) {
         		mini = left;
         	}
-        	if(rght <= li && h.get(rght).k < h.get(mini).k) {
+        	if(rght <= li && h.get(rght).key < h.get(mini).key) {
         		mini = rght;
         	}
         	if(mini != i) {
@@ -243,10 +278,10 @@ class BiGraph {
     	   		minSiftDown(mini, h);
         	}
     	} else {
-    		if(left <= li && h.get(left).kr < h.get(mini).kr) {
+    		if(left <= li && h.get(left).keyR < h.get(mini).keyR) {
         		mini = left;
         	}
-        	if(rght <= li && h.get(rght).kr < h.get(mini).kr) {
+        	if(rght <= li && h.get(rght).keyR < h.get(mini).keyR) {
         		mini = rght;
         	}
         	if(mini != i) {
@@ -276,13 +311,13 @@ class BiGraph {
 			pi = (i - 1)/2;
 			
 //			System.out.println(" minSiftUp pi: " + pi);
-			if(h == heap) {
-				if(h.get(pi).k > h.get(i).k) {
+			if(h == heap || h == preProc) {
+				if(h.get(pi).key > h.get(i).key) {
 					swap(pi, i, h);
 					minSiftUp(pi, h);
 				}
 			} else {
-				if(h.get(pi).kr > h.get(i).kr) {
+				if(h.get(pi).keyR > h.get(i).keyR) {
 					swap(pi, i, h);
 					minSiftUp(pi, h);
 				}
@@ -302,7 +337,9 @@ class BiGraph {
 		
 		return nm;
 	}
+
 	
+	//TODO: Add the preProc queue to a decreaseKey method
 	private void decreaseKey(Node dn, long d, Node start, Node finish, ArrayList<Node> h) {
 		
 //		System.out.println(" decreaseKey i: " + i + " d: " + d);
@@ -318,53 +355,51 @@ class BiGraph {
 		minSiftUp(dni, h);
 	}
 	
-	private void decreaseKey(Node dn, long d, Node start, Node finish, ArrayList<Node> h, boolean astar) {
+	private void decreaseKey(Node dn, long d, Node start, Node finish, ArrayList<Node> h, boolean prioritize) {
 		
 //		System.out.println(" decreaseKey i: " + i + " d: " + d);
 		
 		if(h == heapR) {
 			dn.distR = d;
-			if(astar)
-				dn.setKr(start, finish);
-			else
-				dn.setKr(start, finish, false);
+			dn.setKr(start, finish);	//no reverse search in priority queue
 		} else {
-			dn.dist = d;
-			if(astar)
+
+			if(prioritize)
+				dn.setK(start, finish, true);
+			else {
+				dn.dist = d;
 				dn.setK(start, finish);
-			else
-				dn.setK(start, finish, false);
+			}
+				
 		}
 		int dni = h.indexOf(dn);
 		minSiftUp(dni, h);
 	}
 	
-	private void decreaseKey(Node dn, long d, Node start, Node finish, ArrayList<Node> h, boolean astar, boolean biDirectional) {
+	private void decreaseKey(Node dn, long d, Node start, Node finish, ArrayList<Node> h, boolean mode, boolean biDirectional) {
 		
 //		System.out.println(" decreaseKey i: " + i + " d: " + d);
+		
+		//mode is used to access this method only
+		//TODO: determine if this method is needed or if decreaseKey(Node dn, long d, Node start, Node finish, ArrayList<Node> h) will work
+		
 		if(biDirectional) {
 			if(h == heapR) {
 				dn.distR = d;
-				if(astar)
-					dn.setKr(start, finish);
-				else
-					dn.setKr(start, finish, false);
+				dn.setKr(start, finish);
+				
 			} else {
 				dn.dist = d;
-				if(astar)
-					dn.setK(start, finish);
-				else
-					dn.setK(start, finish, false);
+				dn.setK(start, finish);
+				
 			}
 			int dni = h.indexOf(dn);
 			minSiftUp(dni, h);
 		} else {
 			h = heap;							//if not bidirectional default to the forward direction
 			dn.dist = d;
-			if(astar)
-				dn.setK(start, finish);
-			else
-				dn.setK(start, finish, false);
+			dn.setK(start, finish);
+			
 			int dni = h.indexOf(dn);
 			minSiftUp(dni, h);
 		}
@@ -416,7 +451,7 @@ class BiGraph {
 		tn.setKr(sn, tn);
 		tn.pindexR = tn.index;
 		
-		prt = tn.kr;									//reverse potential of target since tn.distr = 0;
+		prt = tn.keyR;									//reverse potential of target since tn.distr = 0;
 		
 		enQueue(sn, heap);
 		sn.queued = true;
@@ -624,7 +659,7 @@ class BiGraph {
 			
 			if(tn.processed == true) {				
 				if(!heap.isEmpty()) {
-					if(heap.get(0).k > mu) {	//stop when the shortest queued node distance is longer than the shortest path found
+					if(heap.get(0).key > mu) {	//stop when the shortest queued node distance is longer than the shortest path found
 						break;
 					}
 				}
