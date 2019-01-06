@@ -22,15 +22,18 @@ class Node {
 	public boolean queuedR;
 	public boolean active;			//graph state false => not available in graph
 	public boolean contracted;		//contracted state true => contracted
-	public int pindex;				//index of parent
-	public int pindexR;				//index of reverse parent
+	public Node parent;
+	public Node parentR;
+	public HashSet<Edge> bList;		//bucket list for single hop backward Edges search during contraction
 	public int level;				//contraction hueristic
 	public int priority;			//priority for contraction
 	public int neighbors;			//number of contracted neighbors
 	public int rank;				//order of node in contracted graph
 	public int edgeDiff;			//shortcuts - inDegree - outDegree
+	public int hops;				//number of edges from source used to terminate contraction
 	public long key;				//The key used in the priority queue
 	public long keyR;				//the reverse search key
+	public long shortcutDist;		//the minimum distance u->v->w for a shortcut to be created
 	
 	
 	
@@ -43,16 +46,19 @@ class Node {
         this.queued = false;
         this.queuedR = false;
         this.contracted = false;
-        this.pindex = -1;
-        this.pindexR  = -1;
+        this.parent = null;
+        this.parentR  = null;
+        this.bList = new HashSet<Edge>();
         this.active = true;
         this.level = 0;
         this.priority = 0;
         this.neighbors = 0;
         this.rank = 0;
         this.edgeDiff = 0;
+        this.hops = Integer.MAX_VALUE;
         this.key = 0;
         this.keyR = 0;
+        this.shortcutDist = INFINITY;
 	}
 	
 	public void resetNode() {
@@ -62,8 +68,8 @@ class Node {
         this.processedR = false;
         this.queued = false;
         this.queuedR = false;
-        this.pindex = -1;
-        this.pindexR = -1;
+        this.parent = null;
+        this.parentR = null;
         this.key = 0;
         this.keyR = 0;
 	}
@@ -102,6 +108,8 @@ class Node {
 	}
 	
 }
+
+
 
 class Edge {
 	public int target;
@@ -445,11 +453,11 @@ class BiGraph {
 		
 		sn.dist = 0;
 		sn.setK(sn, tn);
-		sn.pindex = sn.index;
+		sn.parent = sn;
 		
 		tn.distR = 0;
 		tn.setKr(sn, tn);
-		tn.pindexR = tn.index;
+		tn.parentR = tn;
 		
 		prt = tn.keyR;									//reverse potential of target since tn.distr = 0;
 		
@@ -496,7 +504,7 @@ class BiGraph {
 								decreaseKey(tt, td, sn, tn, heap);
 							}
 
-						tt.pindex = processing.index;				//min path is my daddy
+						tt.parent = processing;				//min path is my daddy
 					}
 					
 				}
@@ -552,7 +560,7 @@ class BiGraph {
 								decreaseKey(ttr, tdr, sn, tn, heapR);
 							}
 					
-						ttr.pindexR = processingR.index;
+						ttr.parentR = processingR;
 					}
 					
 				}
