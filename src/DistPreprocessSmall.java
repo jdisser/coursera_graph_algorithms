@@ -347,35 +347,36 @@ class BiGraph {
 
 	
 	//TODO: Add the preProc queue to a decreaseKey method
-	private void decreaseKey(Node dn, long d, Node start, Node finish, ArrayList<Node> h) {
+	private void decreaseKey(Node dn, long d, ArrayList<Node> h) {
 		
 //		System.out.println(" decreaseKey i: " + i + " d: " + d);
 		
 		if(h == heapR) {
 			dn.distR = d;
-			dn.setKr(start, finish);
+			dn.setKr();
 		} else {
 			dn.dist = d;
-			dn.setK(start, finish);
+			dn.setK();
 		}
 		int dni = h.indexOf(dn);
 		minSiftUp(dni, h);
 	}
 	
-	private void decreaseKey(Node dn, long d, Node start, Node finish, ArrayList<Node> h, boolean prioritize) {
+	private void decreaseKey(Node dn, long d, ArrayList<Node> h, boolean prioritize) {
 		
 //		System.out.println(" decreaseKey i: " + i + " d: " + d);
 		
 		if(h == heapR) {
 			dn.distR = d;
-			dn.setKr(start, finish);	//no reverse search in priority queue
+			dn.setKr();	//no reverse search in priority queue
 		} else {
 
 			if(prioritize)
-				dn.setK(start, finish, true);
+				//TODO: set priority here
+				dn.setK(true);
 			else {
 				dn.dist = d;
-				dn.setK(start, finish);
+				dn.setK();
 			}
 				
 		}
@@ -383,7 +384,8 @@ class BiGraph {
 		minSiftUp(dni, h);
 	}
 	
-	private void decreaseKey(Node dn, long d, Node start, Node finish, ArrayList<Node> h, boolean mode, boolean biDirectional) {
+	/*
+	private void decreaseKey(Node dn, long d, ArrayList<Node> h, boolean mode, boolean biDirectional) {
 		
 //		System.out.println(" decreaseKey i: " + i + " d: " + d);
 		
@@ -393,11 +395,11 @@ class BiGraph {
 		if(biDirectional) {
 			if(h == heapR) {
 				dn.distR = d;
-				dn.setKr(start, finish);
+				dn.setKr();
 				
 			} else {
 				dn.dist = d;
-				dn.setK(start, finish);
+				dn.setK();
 				
 			}
 			int dni = h.indexOf(dn);
@@ -405,14 +407,14 @@ class BiGraph {
 		} else {
 			h = heap;							//if not bidirectional default to the forward direction
 			dn.dist = d;
-			dn.setK(start, finish);
+			dn.setK();
 			
 			int dni = h.indexOf(dn);
 			minSiftUp(dni, h);
 		}
 		
 	}
-
+	*/
     
     private void swap(int i, int n, ArrayList<Node> h) {
     	
@@ -450,11 +452,11 @@ class BiGraph {
 		Node tn = map.get(t);
 		
 		sn.dist = 0;
-		sn.setK(sn, tn);
+		sn.setK();
 		sn.parent = sn;
 		
 		tn.distR = 0;
-		tn.setKr(sn, tn);
+		tn.setKr();
 		tn.parentR = tn;
 		
 		prt = tn.keyR;									//reverse potential of target since tn.distr = 0;
@@ -495,11 +497,11 @@ class BiGraph {
 							
 							if(tt.queued == false) {	
 								tt.dist = td;
-								tt.setK(sn, tn);
+								tt.setK();
 								enQueue(tt, heap);
 								tt.queued = true;
 							} else {
-								decreaseKey(tt, td, sn, tn, heap);
+								decreaseKey(tt, td, heap);
 							}
 
 						tt.parent = processing;				//min path is my daddy
@@ -551,11 +553,11 @@ class BiGraph {
 							working.add(ttr);
 							if(ttr.queuedR == false) {
 								ttr.distR = tdr;
-								ttr.setKr(sn, tn);
+								ttr.setKr();
 								enQueue(ttr, heapR);
 								ttr.queuedR = true;
 							} else {
-								decreaseKey(ttr, tdr, sn, tn, heapR);
+								decreaseKey(ttr, tdr, heapR);
 							}
 					
 						ttr.parentR = processingR;
@@ -607,7 +609,7 @@ class BiGraph {
 		Node tn = map.get(t);
 		
 		sn.dist = 0;
-		sn.setK(sn, tn, false);							//false => don't use priority
+		sn.setK();							
 	
 		enQueue(sn, heap);
 		sn.queued = true;
@@ -638,11 +640,11 @@ class BiGraph {
 							
 							if(tt.queued == false) {	
 								tt.dist = td;
-								tt.setK(sn, tn, false);
+								tt.setK();
 								enQueue(tt, heap);
 								tt.queued = true;
 							} else {
-								decreaseKey(tt, td, sn, tn, heap, false, false);		//use the unidirectional non potential version of the method
+								decreaseKey(tt, td, heap);		//use the unidirectional non potential version of the method
 							}
 
 //							tt.pindex = processing.index;				//min path is my daddy
