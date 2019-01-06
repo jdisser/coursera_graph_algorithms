@@ -72,6 +72,15 @@ class Node {
         this.parentR = null;
         this.key = 0;
         this.keyR = 0;
+        this.bList.clear();
+        this.active = true;
+        this.level = 0;
+        this.priority = 0;
+        this.neighbors = 0;
+        this.rank = 0;
+        this.edgeDiff = 0;
+        this.hops = Integer.MAX_VALUE;
+        this.shortcutDist = INFINITY;
 	}
 
 	
@@ -79,12 +88,13 @@ class Node {
 		return w*(j - 1) + i;
 	}
 	
-	public double setK(Node start, Node finish) {
+	//TODO: fix the calls to these methods after removing the start and finish node parameters and changing the type from double to long
+	public long setK() {
 		key = dist ;
 		return key;
 	}
 	
-	public long setK(Node start, Node finish, boolean prioritize) {
+	public long setK(boolean prioritize) {
 		if(prioritize)
 			key = priority;
 		else
@@ -92,12 +102,12 @@ class Node {
 		return key;
 	}
 	
-	public double setKr(Node start, Node finish) {
+	public long setKr() {
 		keyR = distR;					//start = finish for reverse graph distance
 		return keyR;
 	}
 	
-	public double setKr(Node start, Node finish, boolean prioritize) {
+	public long setKr(boolean prioritize) {
 		
 		if(prioritize)
 			keyR = priority;					//start = finish for reverse graph distance
@@ -163,14 +173,8 @@ class BiGraph {
 	public HashMap<Integer,Node> map;				//returns Nodes by vertex (index)
 	public HashSet<Node> working;					//all nodes processed by query that must be reset
 	
-	public ArrayList<Barrier> barriers;				//for generating sets of inactive nodes for test graphs
-	
 	public final long INFINITY = Long.MAX_VALUE / 4;
 
-
-	
-	public int root;
-	public int cNode;
 	public int n;
 	public long mu = INFINITY;
 	public int processed;
@@ -199,14 +203,9 @@ class BiGraph {
             this.graphR.add(new ArrayList<Edge>());          
   
         }
-        
-        this.root = -1;
-        this.cNode = -1;
-        
-        this.processed = 0;
-        
-        this.barriers = new ArrayList<Barrier>();
 
+        this.processed = 0;
+  
 	}
 	
 	
@@ -445,8 +444,7 @@ class BiGraph {
 		
 		initializeQueues();
 		resetWorkingNodes();
-		
-		cNode = -1;
+
 		
 		Node sn = map.get(s);
 		Node tn = map.get(t);
@@ -597,20 +595,19 @@ class BiGraph {
 		//this is a checking method using the simple Dijkstra algorithm for testing
 		
 		
-		double prt = 0;									//in simple Dijkstra there is no potential
+
 		long mu = INFINITY;
 		processed = 0;
 		
 		initializeQueues();
 		resetWorkingNodes();
-		
-		cNode = -1;
+
 		
 		Node sn = map.get(s);
 		Node tn = map.get(t);
 		
 		sn.dist = 0;
-		sn.setK(sn, tn, false);							//false => don't use the A* potential in the K value
+		sn.setK(sn, tn, false);							//false => don't use priority
 	
 		enQueue(sn, heap);
 		sn.queued = true;
