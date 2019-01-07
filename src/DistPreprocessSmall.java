@@ -24,6 +24,7 @@ class Node {
 	public boolean contracted;		//contracted state true => contracted
 	public Node parent;
 	public Node parentR;
+	//TODO: remove the bList property and use the graphR Edge list instead!!
 	public HashSet<Edge> bList;		//bucket list for single hop backward Edges search during contraction
 	public int level;				//contraction hueristic
 	public int priority;			//priority for contraction
@@ -61,7 +62,7 @@ class Node {
         this.shortcutDist = INFINITY;
 	}
 	
-	public void resetNode() {
+	public void resetNode(boolean reactivate) {
 		this.dist = INFINITY;
         this.distR = INFINITY;
         this.processed = false;
@@ -72,8 +73,10 @@ class Node {
         this.parentR = null;
         this.key = 0;
         this.keyR = 0;
-        this.bList.clear();
-        this.active = true;
+        //TODO: can blist be eliminated and the graphR list be used instead???
+//        this.bList.clear();
+        if(reactivate)
+        	this.active = true;
         this.level = 0;
         this.priority = 0;
         this.neighbors = 0;
@@ -227,10 +230,10 @@ class BiGraph {
 		
 	}
 	
-	public void resetWorkingNodes() {
+	public void resetWorkingNodes(boolean reactivate) {
 		if(!working.isEmpty()) {
 			for(Node n: working) {
-				n.resetNode();
+				n.resetNode(reactivate);
 			}
 			working.clear();
 		}
@@ -676,6 +679,139 @@ class BiGraph {
 		return mu == INFINITY? -1: mu;
 
 	}
+	
+	public int shortcut(Node v, boolean create) {
+		
+		//if create, create shortcuts else return the number of shortcuts that would be created
+		
+		int shortcuts = 0;
+		
+		ArrayList<Edge> inEdges = graphR.get(v.index);
+		ArrayList<Edge> outEdges = graph.get(v.index);
+		
+		ArrayList<Node> us = new ArrayList<Node>();
+		ArrayList<Node> ws = new ArrayList<Node>();
+
+		
+		for(Edge e : inEdges) {			//get source nodes
+			us.add(e.u);
+		}
+		
+		for(Edge e : outEdges) {		//get target nodes
+			ws.add(e.v);
+		}
+		
+		
+		
+		v.active = false;				//remove v from the active graph
+		
+		for(Node u : us) {				//check for a witness path to each target
+			
+			resetWorkingNodes(true);	//TODO: verify that this method can be called for each source
+			
+			long mu = INFINITY;
+			processed = 0;
+			initializeQueues();
+			
+			long uvDist = 0;
+			u.dist = 0;
+			
+			for(Edge e : inEdges) {						//get d(u,v) for this source node
+				if(e.u == u) {
+					uvDist = e.length;
+				}
+			}
+			
+			long maxShortcut = 0;
+			
+			for(Edge e : outEdges) {					//for each target set the maximum shortcut distances d(u,v) + d(v,w) from this source
+				e.v.shortcutDist = uvDist + e.length;
+				maxShortcut = Math.max(maxShortcut, e.v.shortcutDist);
+			}
+
+			long minRevDist = INFINITY;
+			
+			for(Node w : ws) {								//use the graphR edge list as a blist!!
+				for(Edge e : graphR.get(w.index)) {
+					minRevDist = Math.min(minRevDist, e.length);
+					if(e.v == u) {
+						//TODO: put code for handling single hop search here
+						w.dist = e.length;
+						w.parent = u;
+					}
+				}
+			}
+			
+			long dijkstraStop = maxShortcut - minRevDist;
+
+			u.setK();							
+		
+			enQueue(u, heap);
+			u.queued = true;
+			working.add(u);								//add the initial node to the working set
+			
+			
+		
+			while(!heap.isEmpty()) {						//process the next node in the forward graph
+				
+				Node processing = getMin(heap);
+				processing.queued = false;
+				
+//					System.out.println("processing Node: " + processing.index);
+				if(processing != tn) {
+					for(Edge e : graph.get(processing.index)) {
+						
+						Node tt = e.v;	
+						
+						long td = processing.dist + e.length;
+					
+						if(tt.dist > td) {
+								
+								working.add(tt);
+								
+								if(tt.queued == false) {	
+									tt.dist = td;
+									tt.setK();
+									enQueue(tt, heap);
+									tt.queued = true;
+								} else {
+									decreaseKey(tt, td, heap);		//use the unidirectional non potential version of the method
+								}
+
+//								tt.pindex = processing.index;				//min path is my daddy
+						}
+							
+					}
+					
+					processing.processed = true;
+					++processed;
+					
+				} else {							//processing the target node here
+					
+					if(processing.dist < mu)
+						mu = processing.dist;
+					processing.processed = true;
+				}
+			
+				
+				
+				if(tn.processed == true) {				
+					if(!heap.isEmpty()) {
+						if(heap.get(0).key > mu) {	//stop when the shortest queued node distance is longer than the shortest path found
+							break;
+						}
+					}
+				}				
+			}
+//			System.out.println("Dijkstra processed edges: " + processed);
+			return mu == INFINITY? -1: mu;
+		}
+
+		
+
+	}
+	
+	
 }
 
 class tableHash{
