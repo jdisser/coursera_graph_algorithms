@@ -110,18 +110,22 @@ class Node {
 	}
 	
 	public long setKr() {
-		keyR = distR;					//start = finish for reverse graph distance
+		keyR = distR;					
 		return keyR;
 	}
 	
 	public long setKr(boolean prioritize) {
 		
 		if(prioritize)
-			keyR = priority;					//start = finish for reverse graph distance
+			keyR = priority;					
 		else
 			keyR = distR;
 		
 		return keyR;
+	}
+	
+	public void setPriority() {
+		this.priority = this.edgeDiff + this.neighbors + this.shortcuts + this.level;
 	}
 	
 }
@@ -185,10 +189,13 @@ class BiGraph {
 	public int n;
 	public long mu = INFINITY;
 	public int processed;
+	
+	TableHash hTable;
 
 	
-	public BiGraph(int n) {
+	public BiGraph(int n, TableHash ht) {
 		this.n = n;
+		this.hTable = ht;			//inject a hash table object
 
         this.graph = new ArrayList<ArrayList<Edge>>();
         this.graphR = new ArrayList<ArrayList<Edge>>();
@@ -279,8 +286,11 @@ class BiGraph {
     	int li = h.size() - 1;	//0 based last index
     	int left = 2*i + 1;
     	int rght = 2*i + 2;
+    	int lhi;
+    	int rhi;
+    	int minhi;
     	
-    	if(h == heap || h == preProc) {
+    	if(h == heap) {
     		if(left <= li && h.get(left).key < h.get(mini).key) {
         		mini = left;
         	}
@@ -291,12 +301,40 @@ class BiGraph {
     	   		swap(i, mini, h);
     	   		minSiftDown(mini, h);
         	}
-    	} else {
+    	}
+    	if(h == heapR){
     		if(left <= li && h.get(left).keyR < h.get(mini).keyR) {
         		mini = left;
         	}
         	if(rght <= li && h.get(rght).keyR < h.get(mini).keyR) {
         		mini = rght;
+        	}
+        	if(mini != i) {
+    	   		swap(i, mini, h);
+    	   		minSiftDown(mini, h);
+        	}
+    	}
+    	if(h == preProc) {
+    		
+    		lhi = hTable.hash(h.get(left).index);					//use the hash of the index to break ties
+    		rhi = hTable.hash(h.get(rght).index);
+    		minhi = hTable.hash(h.get(mini).index);
+    		
+    		if(left <= li && h.get(left).key < h.get(mini).key) {
+        		mini = left;
+        	} else {
+        		if(left <= li && h.get(left).key == h.get(mini).key) {
+        			if(lhi < minhi)
+        				mini = left;
+        		}
+        	}
+        	if(rght <= li && h.get(rght).key < h.get(mini).key) {
+        		mini = rght;
+        	} else {
+        		if(rght <= li && h.get(rght).key == h.get(mini).key) {
+        			if(rhi < mini)
+        				mini = rght;
+        		}
         	}
         	if(mini != i) {
     	   		swap(i, mini, h);
@@ -319,22 +357,41 @@ class BiGraph {
 	private void minSiftUp(int i, ArrayList<Node> h) {
 		
 		int pi;
+		int hi;
+		int hpi;
 //		System.out.println(" minSiftUp i: " + i);
 //		printHeap(h);
 		if(i > 0) {
 			pi = (i - 1)/2;
 			
 //			System.out.println(" minSiftUp pi: " + pi);
-			if(h == heap || h == preProc) {
+			if(h == heap) {
 				if(h.get(pi).key > h.get(i).key) {
 					swap(pi, i, h);
 					minSiftUp(pi, h);
 				}
-			} else {
+			} 
+			if(h == heapR) {
 				if(h.get(pi).keyR > h.get(i).keyR) {
 					swap(pi, i, h);
 					minSiftUp(pi, h);
 				}
+			}
+			if(h == preProc) {
+				hi = hTable.hash(h.get(i).index);					//use the hash of the index to break ties
+	    		hpi = hTable.hash(h.get(pi).index);
+	    		
+	    		if(h.get(pi).key > h.get(i).key) {
+					swap(pi, i, h);
+					minSiftUp(pi, h);
+				} else {
+					if(h.get(pi).key == h.get(i).key) {
+						if(hpi > hi) {
+							swap(pi, i, h);
+							minSiftUp(pi, h);
+						}
+					}
+				}	
 			}
 			
 			
@@ -352,76 +409,28 @@ class BiGraph {
 		return nm;
 	}
 
-	
-	//TODO: Add the preProc queue to a decreaseKey method
 	private void decreaseKey(Node dn, long d, ArrayList<Node> h) {
 		
 //		System.out.println(" decreaseKey i: " + i + " d: " + d);
 		
 		if(h == heapR) {
 			dn.distR = d;
-			dn.setKr();
-		} else {
-			dn.dist = d;
-			dn.setK();
-		}
-		int dni = h.indexOf(dn);
-		minSiftUp(dni, h);
-	}
-	
-	private void decreaseKey(Node dn, long d, ArrayList<Node> h, boolean prioritize) {
-		
-//		System.out.println(" decreaseKey i: " + i + " d: " + d);
-		
-		if(h == heapR) {
-			dn.distR = d;
 			dn.setKr();	//no reverse search in priority queue
-		} else {
-
-			if(prioritize)
-				//TODO: set priority here
-				dn.setK(true);
-			else {
-				dn.dist = d;
-				dn.setK();
-			}
-				
+		} 
+		if(h == heap) {
+			dn.dist = d;
+			dn.setK();
 		}
+		if(h == preProc) {
+			dn.setPriority();
+			dn.setK(true);
+		}		
+		
 		int dni = h.indexOf(dn);
 		minSiftUp(dni, h);
 	}
 	
-	/*
-	private void decreaseKey(Node dn, long d, ArrayList<Node> h, boolean mode, boolean biDirectional) {
-		
-//		System.out.println(" decreaseKey i: " + i + " d: " + d);
-		
-		//mode is used to access this method only
-		//TODO: determine if this method is needed or if decreaseKey(Node dn, long d, Node start, Node finish, ArrayList<Node> h) will work
-		
-		if(biDirectional) {
-			if(h == heapR) {
-				dn.distR = d;
-				dn.setKr();
-				
-			} else {
-				dn.dist = d;
-				dn.setK();
-				
-			}
-			int dni = h.indexOf(dn);
-			minSiftUp(dni, h);
-		} else {
-			h = heap;							//if not bidirectional default to the forward direction
-			dn.dist = d;
-			dn.setK();
-			
-			int dni = h.indexOf(dn);
-			minSiftUp(dni, h);
-		}
-		
-	}
-	*/
+	
     
     private void swap(int i, int n, ArrayList<Node> h) {
     	
@@ -684,7 +693,7 @@ class BiGraph {
 
 	}
 	
-	public int shortcut(Node v, boolean create, int hops) {
+	public int shortcut(Node v, boolean contract, int hops) {
 		
 		//if create, create shortcuts else return the edge difference shortcuts - ins - outs
 		
@@ -745,7 +754,6 @@ class BiGraph {
 				for(Edge e : graphR.get(w.index)) {
 					minRevDist = Math.min(minRevDist, e.length);
 					if(e.v == u) {
-						//TODO: put code for handling single hop search here
 						w.dist = e.length;
 						w.parent = u;
 						w.hops = 1;
@@ -817,7 +825,7 @@ class BiGraph {
 				if(w.dist > w.shortcutDist) {
 					//The witness path is longer or non existent
 					++shortcuts;
-					if(create) {
+					if(contract) {
 						Edge sc = new Edge(u , v , w , w.shortcutDist);
 						graph.get(u.index).add(sc);
 					}
@@ -829,7 +837,7 @@ class BiGraph {
 		working.add(v);
 		resetWorkingNodes(true);	//reactivate the contracted node!! It remains in the graph!!
 		v.shortcuts = shortcuts;
-		if(create) {
+		if(contract) {
 			v.contracted = true;
 			for(Node w : ws) {		//increase contracted neighbors
 				++w.neighbors;
@@ -839,11 +847,12 @@ class BiGraph {
 				u.level = Math.max(u.level, v.level + 1);
 			}
 		}
-		return shortcuts - ins - outs;			//return the edge difference
+		v.edgeDiff = shortcuts - ins - outs;
+		return v.edgeDiff;			//return the edge difference
 	}
 }
 
-class tableHash{
+class TableHash{
 	
 	ArrayList<ArrayList<Integer>> hashTable;
 	ArrayList<Integer> masks;
@@ -853,7 +862,7 @@ class tableHash{
 	int k;
 	
 	
-	public tableHash(int bits, int r) {
+	public TableHash(int bits, int r) {
 		
 		this.bits = bits;
 		this.r = r;
