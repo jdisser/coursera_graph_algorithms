@@ -448,7 +448,7 @@ class BiGraph {
 		long mu = INFINITY;
 		
 		initializeQueues();
-		resetWorkingNodes();
+		resetWorkingNodes(true);
 
 		
 		Node sn = map.get(s);
@@ -605,7 +605,7 @@ class BiGraph {
 		processed = 0;
 		
 		initializeQueues();
-		resetWorkingNodes();
+		resetWorkingNodes(true);
 
 		
 		Node sn = map.get(s);
@@ -680,7 +680,7 @@ class BiGraph {
 
 	}
 	
-	public int shortcut(Node v, boolean create) {
+	public int shortcut(Node v, boolean create, int hops) {
 		
 		//if create, create shortcuts else return the number of shortcuts that would be created
 		
@@ -715,6 +715,7 @@ class BiGraph {
 			
 			long uvDist = 0;
 			u.dist = 0;
+			u.hops = 0;
 			
 			for(Edge e : inEdges) {						//get d(u,v) for this source node
 				if(e.u == u) {
@@ -739,6 +740,7 @@ class BiGraph {
 						//TODO: put code for handling single hop search here
 						w.dist = e.length;
 						w.parent = u;
+						w.hops = 1;
 					}
 				}
 			}
@@ -749,7 +751,7 @@ class BiGraph {
 		
 			enQueue(u, heap);
 			u.queued = true;
-			working.add(u);								//add the initial node to the working set
+			working.add(u);									//add the initial node to the working set
 			
 			
 		
@@ -758,7 +760,7 @@ class BiGraph {
 				Node x = getMin(heap);
 				x.queued = false;
 				mu = Math.max(mu, x.dist);
-				if(mu >= dijkstraStop)
+				if(mu >= dijkstraStop || x.hops > hops)		//stopping conditions are max d(u,w) > max (d(u,v)+d(v,w)) - min(x,w) || hops > hops parameter 
 					break;
 				
 //					System.out.println("processing Node: " + processing.index);
@@ -776,8 +778,10 @@ class BiGraph {
 									working.add(tt);
 									tt.dist = td;
 									tt.parent = x;
+									tt.hops = x.hops + 1;
 								} else {
-									if(tt.queued == false) {	
+									if(tt.queued == false) {
+										tt.hops = x.hops + 1;
 										tt.dist = td;
 										tt.setK();
 										enQueue(tt, heap);
@@ -785,6 +789,7 @@ class BiGraph {
 										working.add(tt);
 									} else {
 										decreaseKey(tt, td, heap);		//use the unidirectional non potential version of the method
+										tt.hops = x.hops + 1;
 									}
 								}
 //									tt.pindex = processing.index;				//min path is my daddy
@@ -807,15 +812,23 @@ class BiGraph {
 					if(create) {
 						Edge sc = new Edge(u , v , w , w.shortcutDist);
 						graph.get(u.index).add(sc);
-						//TODO: some other heuristics need to be computed here...
 					}
 					
 				}
 			}
 		}
-		
+		//TODO: implement levels here
 		working.add(v);
-		resetWorkingNodes(false);	//do not reactivate the contracted node!!
+		resetWorkingNodes(true);	//reactivate the contracted node!! It remains in the graph!!
+		if(create) {
+			v.contracted = true;
+			for(Node w : ws) {		//increase contracted neighbors
+				++w.neighbors;
+			}
+			for(Node u : us) {
+				++u.neighbors;
+			}
+		}
 		return shortcuts;
 	}
 }
