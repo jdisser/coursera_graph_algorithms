@@ -709,7 +709,7 @@ class BiGraph {
 			
 			resetWorkingNodes(true);	//TODO: verify that this method can be called for each source
 			
-			long mu = INFINITY;
+			long mu = 0;
 			processed = 0;
 			initializeQueues();
 			
@@ -727,6 +727,7 @@ class BiGraph {
 			for(Edge e : outEdges) {					//for each target set the maximum shortcut distances d(u,v) + d(v,w) from this source
 				e.v.shortcutDist = uvDist + e.length;
 				maxShortcut = Math.max(maxShortcut, e.v.shortcutDist);
+				e.v.dist = INFINITY;
 			}
 
 			long minRevDist = INFINITY;
@@ -754,64 +755,69 @@ class BiGraph {
 		
 			while(!heap.isEmpty()) {						//process the next node in the forward graph
 				
-				Node processing = getMin(heap);
-				processing.queued = false;
+				Node x = getMin(heap);
+				x.queued = false;
+				mu = Math.max(mu, x.dist);
+				if(mu >= dijkstraStop)
+					break;
 				
 //					System.out.println("processing Node: " + processing.index);
-				if(processing != tn) {
-					for(Edge e : graph.get(processing.index)) {
-						
-						Node tt = e.v;	
-						
-						long td = processing.dist + e.length;
-					
-						if(tt.dist > td) {
-								
-								working.add(tt);
-								
-								if(tt.queued == false) {	
-									tt.dist = td;
-									tt.setK();
-									enQueue(tt, heap);
-									tt.queued = true;
-								} else {
-									decreaseKey(tt, td, heap);		//use the unidirectional non potential version of the method
-								}
 
-//								tt.pindex = processing.index;				//min path is my daddy
+				for(Edge e : graph.get(x.index)) {
+					
+					Node tt = e.v;	
+					
+					if(tt.active) {										//ignore contracted nodes
+						long td = x.dist + e.length;
+						
+						if(tt.dist > td) {
+								if(ws.contains(tt)) {
+									//tt is a target node and is never queued
+									working.add(tt);
+									tt.dist = td;
+									tt.parent = x;
+								} else {
+									if(tt.queued == false) {	
+										tt.dist = td;
+										tt.setK();
+										enQueue(tt, heap);
+										tt.queued = true;
+										working.add(tt);
+									} else {
+										decreaseKey(tt, td, heap);		//use the unidirectional non potential version of the method
+									}
+								}
+//									tt.pindex = processing.index;				//min path is my daddy
 						}
-							
 					}
-					
-					processing.processed = true;
-					++processed;
-					
-				} else {							//processing the target node here
-					
-					if(processing.dist < mu)
-						mu = processing.dist;
-					processing.processed = true;
+						
 				}
-			
-				
-				
-				if(tn.processed == true) {				
-					if(!heap.isEmpty()) {
-						if(heap.get(0).key > mu) {	//stop when the shortest queued node distance is longer than the shortest path found
-							break;
-						}
-					}
-				}				
+					
+				++processed;
+				x.processed = true;
+
 			}
 //			System.out.println("Dijkstra processed edges: " + processed);
-			return mu == INFINITY? -1: mu;
+
+			//Count and optionally generate shortcuts
+			for(Node w : ws) {
+				if(w.dist > w.shortcutDist) {
+					//The witness path is longer or non existent
+					++shortcuts;
+					if(create) {
+						Edge sc = new Edge(u , v , w , w.shortcutDist);
+						graph.get(u.index).add(sc);
+						//TODO: some other heuristics need to be computed here...
+					}
+					
+				}
+			}
 		}
-
 		
-
+		working.add(v);
+		resetWorkingNodes(false);	//do not reactivate the contracted node!!
+		return shortcuts;
 	}
-	
-	
 }
 
 class tableHash{
