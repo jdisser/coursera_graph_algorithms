@@ -24,8 +24,7 @@ class Node {
 	public boolean contracted;		//contracted state true => contracted
 	public Node parent;
 	public Node parentR;
-	//TODO: remove the bList property and use the graphR Edge list instead!!
-	public HashSet<Edge> bList;		//bucket list for single hop backward Edges search during contraction
+//	public HashSet<Edge> bList;		//bucket list for single hop backward Edges search during contraction
 	public int level;				//contraction hueristic
 	public int priority;			//priority for contraction
 	public int neighbors;			//number of contracted neighbors
@@ -35,6 +34,7 @@ class Node {
 	public long key;				//The key used in the priority queue
 	public long keyR;				//the reverse search key
 	public long shortcutDist;		//the minimum distance u->v->w for a shortcut to be created
+	public int shortcuts;
 	
 	
 	
@@ -49,7 +49,7 @@ class Node {
         this.contracted = false;
         this.parent = null;
         this.parentR  = null;
-        this.bList = new HashSet<Edge>();
+//        this.bList = new HashSet<Edge>();
         this.active = true;
         this.level = 0;
         this.priority = 0;
@@ -60,8 +60,11 @@ class Node {
         this.key = 0;
         this.keyR = 0;
         this.shortcutDist = INFINITY;
+        this.shortcuts = 0;
 	}
 	
+	
+	//Note: this method does NOT reset the shortcuts, contracted, level
 	public void resetNode(boolean reactivate) {
 		this.dist = INFINITY;
         this.distR = INFINITY;
@@ -73,11 +76,12 @@ class Node {
         this.parentR = null;
         this.key = 0;
         this.keyR = 0;
-        //TODO: can blist be eliminated and the graphR list be used instead???
+        //can blist be eliminated and the graphR list be used instead??? No but blist not implemented
 //        this.bList.clear();
         if(reactivate)
         	this.active = true;
-        this.level = 0;
+//        this.level = 0;
+        //TODO: determine how to handle the heuristic properties for resets during prioritizing, contracting and searching
         this.priority = 0;
         this.neighbors = 0;
         this.rank = 0;
@@ -91,7 +95,7 @@ class Node {
 		return w*(j - 1) + i;
 	}
 	
-	//TODO: fix the calls to these methods after removing the start and finish node parameters and changing the type from double to long
+	
 	public long setK() {
 		key = dist ;
 		return key;
@@ -682,12 +686,16 @@ class BiGraph {
 	
 	public int shortcut(Node v, boolean create, int hops) {
 		
-		//if create, create shortcuts else return the number of shortcuts that would be created
+		//if create, create shortcuts else return the edge difference shortcuts - ins - outs
 		
 		int shortcuts = 0;
 		
 		ArrayList<Edge> inEdges = graphR.get(v.index);
 		ArrayList<Edge> outEdges = graph.get(v.index);
+		
+		int ins = inEdges.size();
+		int outs = outEdges.size();
+		
 		
 		ArrayList<Node> us = new ArrayList<Node>();
 		ArrayList<Node> ws = new ArrayList<Node>();
@@ -817,9 +825,10 @@ class BiGraph {
 				}
 			}
 		}
-		//TODO: implement levels here
+
 		working.add(v);
 		resetWorkingNodes(true);	//reactivate the contracted node!! It remains in the graph!!
+		v.shortcuts = shortcuts;
 		if(create) {
 			v.contracted = true;
 			for(Node w : ws) {		//increase contracted neighbors
@@ -827,9 +836,10 @@ class BiGraph {
 			}
 			for(Node u : us) {
 				++u.neighbors;
+				u.level = Math.max(u.level, v.level + 1);
 			}
 		}
-		return shortcuts;
+		return shortcuts - ins - outs;			//return the edge difference
 	}
 }
 
