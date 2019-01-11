@@ -18,8 +18,10 @@ class Node {
 	public long distR;				//this is the distance from the target in the reverse graph
 	public boolean processed;
 	public boolean processedR;
-	public boolean queued;
-	public boolean queuedR;
+	public boolean processedP;
+	public boolean queued;			//in heap
+	public boolean queuedR;			//in heapR
+	public boolean queuedP;			//in preProc
 	public boolean active;			//graph state false => not available in graph
 	public boolean contracted;		//contracted state true => contracted
 	public Node parent;
@@ -44,8 +46,10 @@ class Node {
         this.distR = INFINITY;
         this.processed = false;
         this.processedR = false;
+        this.processedP = false;
         this.queued = false;
         this.queuedR = false;
+        this.queuedP = false;
         this.contracted = false;
         this.parent = null;
         this.parentR  = null;
@@ -70,23 +74,24 @@ class Node {
         this.distR = INFINITY;
         this.processed = false;
         this.processedR = false;
+        this.processedP = false;
         this.queued = false;
         this.queuedR = false;
         this.parent = null;
         this.parentR = null;
         this.key = 0;
         this.keyR = 0;
-        //can blist be eliminated and the graphR list be used instead??? No but blist not implemented
-//        this.bList.clear();
         if(reactivate)
         	this.active = true;
-//        this.level = 0;
-        //TODO: determine how to handle the heuristic properties for resets during prioritizing, contracting and searching
-        this.priority = 0;
-        this.neighbors = 0;
-        this.rank = 0;
-        this.edgeDiff = 0;
         this.hops = Integer.MAX_VALUE;
+        
+        //these properties are persistent during buildPriorityQueue and shortcut(true) for contraction
+//        this.level = 0;
+//        this.priority = 0;
+//        this.neighbors = 0;
+//        this.rank = 0;
+//        this.edgeDiff = 0;
+
         this.shortcutDist = INFINITY;
 	}
 
@@ -190,12 +195,17 @@ class BiGraph {
 	public long mu = INFINITY;
 	public int processed;
 	
+	public int nRank;
+	public int maxHop;
+	
 	TableHash hTable;
 
 	
 	public BiGraph(int n, TableHash ht) {
 		this.n = n;
 		this.hTable = ht;			//inject a hash table object
+		this.nRank = 0;
+		this.maxHop = 5;			//adjust this for best performance
 
         this.graph = new ArrayList<ArrayList<Edge>>();
         this.graphR = new ArrayList<ArrayList<Edge>>();
@@ -407,6 +417,28 @@ class BiGraph {
 		minSiftDown(0, h);
 		
 		return nm;
+	}
+	
+	public Node minPriority(Node a, Node b) {
+		//returns minimum priority node with hash tiebreaker
+		
+		Node min = null;
+		
+		if(a == null || b==null)
+			return min;
+		
+		if(a.priority < b.priority)
+			min = a;
+		else if(b.priority < a.priority)
+			min = b;
+		else if(hTable.hash(a.index) < hTable.hash(b.index))
+			min = a;
+		else
+			min = b;
+			
+		
+		return min;
+		
 	}
 
 	private void decreaseKey(Node dn, long d, ArrayList<Node> h) {
@@ -711,11 +743,19 @@ class BiGraph {
 
 		
 		for(Edge e : inEdges) {			//get source nodes
-			us.add(e.u);
+			if(!contract)
+				us.add(e.u);
+			else
+				if(!e.u.contracted)		//while contracting the graph ignore previously contracted nodes
+					us.add(e.u);
 		}
 		
 		for(Edge e : outEdges) {		//get target nodes
-			ws.add(e.v);
+			if(!contract)
+				ws.add(e.v);
+			else
+				if(!e.v.contracted)
+					ws.add(e.v);
 		}
 		
 		
@@ -835,21 +875,38 @@ class BiGraph {
 		}
 
 		working.add(v);
-		resetWorkingNodes(true);	//reactivate the contracted node!! It remains in the graph!!
+		resetWorkingNodes(true);							//reactivate the contracted node!! It remains in the graph!!
 		v.shortcuts = shortcuts;
 		if(contract) {
 			v.contracted = true;
-			for(Node w : ws) {		//increase contracted neighbors
+			v.rank = ++nRank;
+			for(Node w : ws) {								//increase contracted neighbors
 				++w.neighbors;
 			}
 			for(Node u : us) {
 				++u.neighbors;
-				u.level = Math.max(u.level, v.level + 1);
+				u.level = Math.max(u.level, v.level + 1); 	//update level of neighbors
 			}
 		}
-		v.edgeDiff = shortcuts - ins - outs;
-		return v.edgeDiff;			//return the edge difference
+		v.edgeDiff = shortcuts - ins - outs;				//set the edge difference NOTE: call setPriority on a node to update the priority property
+		return v.edgeDiff;									//return the edge difference
 	}
+	
+	public void buildPriorityQueue() {
+		
+		for(int i = 1; i<= n; ++i) {
+			Node n = map.get(i);
+			initializeQueues();
+			shortcut(n, false, maxHop);
+			n.setPriority();
+			n.setK(true);
+			enQueue(n, preProc);
+			n.queuedP = true;
+		}
+	}
+	
+	
+	
 }
 
 class TableHash{
