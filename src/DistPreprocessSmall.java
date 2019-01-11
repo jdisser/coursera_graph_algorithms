@@ -419,6 +419,10 @@ class BiGraph {
 		return nm;
 	}
 	
+	private Node peek(ArrayList<Node> h) {
+		return h.get(0);
+	}
+	
 	public Node minPriority(Node a, Node b) {
 		//returns minimum priority node with hash tiebreaker
 		
@@ -731,6 +735,8 @@ class BiGraph {
 		
 		int shortcuts = 0;
 		
+		initializeQueues();
+		
 		ArrayList<Edge> inEdges = graphR.get(v.index);
 		ArrayList<Edge> outEdges = graph.get(v.index);
 		
@@ -764,7 +770,7 @@ class BiGraph {
 		
 		for(Node u : us) {				//check for a witness path to each target
 			
-			resetWorkingNodes(true);	//TODO: verify that this method can be called for each source
+			resetWorkingNodes(true);	
 			
 			long mu = 0;
 			processed = 0;
@@ -868,6 +874,8 @@ class BiGraph {
 					if(contract) {
 						Edge sc = new Edge(u , v , w , w.shortcutDist);
 						graph.get(u.index).add(sc);
+						Edge scr = new Edge(w, v, u, w.shortcutDist);
+						graphR.get(w.index).add(scr);
 					}
 					
 				}
@@ -877,6 +885,7 @@ class BiGraph {
 		working.add(v);
 		resetWorkingNodes(true);							//reactivate the contracted node!! It remains in the graph!!
 		v.shortcuts = shortcuts;
+		v.edgeDiff = shortcuts - ins - outs;				//set the edge difference NOTE: call setPriority on a node to update the priority property
 		if(contract) {
 			v.contracted = true;
 			v.rank = ++nRank;
@@ -888,7 +897,7 @@ class BiGraph {
 				u.level = Math.max(u.level, v.level + 1); 	//update level of neighbors
 			}
 		}
-		v.edgeDiff = shortcuts - ins - outs;				//set the edge difference NOTE: call setPriority on a node to update the priority property
+		
 		return v.edgeDiff;									//return the edge difference
 	}
 	
@@ -896,13 +905,31 @@ class BiGraph {
 		
 		for(int i = 1; i<= n; ++i) {
 			Node n = map.get(i);
-			initializeQueues();
 			shortcut(n, false, maxHop);
 			n.setPriority();
 			n.setK(true);
 			enQueue(n, preProc);
 			n.queuedP = true;
 		}
+	}
+	
+	public void contractGraph() {
+		while(!preProc.isEmpty()) {
+			Node n = getMin(preProc);
+			shortcut(n, false, maxHop);
+			n.setPriority();
+			n.setK(true);
+			if(n != minPriority(n, peek(preProc))) {
+				enQueue(n, preProc);
+				continue;
+			} else {
+				shortcut(n, true, maxHop);
+				n.setPriority();
+				n.setK(true);
+				n.processedP = true;
+			}
+		}
+		resetWorkingNodes(true);
 	}
 	
 	
