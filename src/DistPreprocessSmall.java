@@ -997,13 +997,13 @@ public class DistPreprocessSmall {
     
     public static void main(String args[]) {
     	
-		
+		TableHash tHash = new TableHash(18,3);
     	
     	if(args.length != 0) {
 
     		
     			//TODO: rewrite this section to process the test graphs without the euclidian coordinates
-    			//to run a test file invoke the class with a path parameter ie: java DistWithCoords distTests/01
+    			//to run a test file invoke the class with a path parameter ie: java DistPreprocessSmall distTests/02P
     			
     			String p = args[0];
     			String pp = p + ".a";
@@ -1020,19 +1020,20 @@ public class DistPreprocessSmall {
     				int n = Integer.valueOf(params[0]);
     				int m = Integer.valueOf(params[1]);
     				
-    				BiGraph g = new BiGraph(n + 1);
+    				
+    				
+    				BiGraph g = new BiGraph(n + 1, tHash);
     				
     				System.out.println("Running file: " + fp.toString());
-    				System.out.println("Points: " + n + " Edges: " + m);
+    				System.out.println("Nodes: " + n + " Edges: " + m);
     				
     				int points = 0;
     				
     				
-    				for(int i = 1; i <= n; ++i){
-    					s = br.readLine();
-    					params = s.split(" ");
-    					
-    					
+    				for(int i = 1; i <= n; ++i){	//Nodes 1..n
+//    					s = br.readLine();
+//    					params = s.split(" ");
+	
     		            g.addNode(i);
     		            ++points;
     					
@@ -1052,6 +1053,16 @@ public class DistPreprocessSmall {
     				
     				System.out.println("Generated edges: " + edges);
     				
+    				System.out.println("Building Priority Queue: ");
+    				g.buildPriorityQueue();
+    				System.out.println("Contracting: ");
+    				g.contractGraph();
+    				System.out.println("Ready");
+    				
+    				
+    				
+    				
+    				/*
     				s = br.readLine();
     				
     				int tests = Integer.valueOf(s);
@@ -1069,10 +1080,11 @@ public class DistPreprocessSmall {
     					e.printStackTrace();
     				}
     				
+    				//TODO: rewrite this section to use the biDijkstraCh() method instead of the biStar
     				int biAStarSum = 0;
     				int dijkstraSum = 0;
     				
-    				//TODO: rewrite this section to use the biDijkstraCh() method instead of the biStar
+    				
     				for(int k = 0; k < tests; ++k) {
     					s = br.readLine();
     					params = s.split(" ");
@@ -1097,7 +1109,7 @@ public class DistPreprocessSmall {
     				}
     				
     				System.out.println("BiAStar Sum: " + biAStarSum + " Dijkstra Sum: " + dijkstraSum);
-    				
+    				*/
     				
     				
     			} catch (IOException e) {
@@ -1115,7 +1127,7 @@ public class DistPreprocessSmall {
 	        int n = in.nextInt();
 	        int m = in.nextInt();
 	        
-	        BiGraph g = new BiGraph(n + 1);
+	        BiGraph g = new BiGraph(n + 1, tHash);
 	
 	        for (int i = 1; i <= n; i++) { 
 	            g.addNode(i);
@@ -1133,7 +1145,7 @@ public class DistPreprocessSmall {
 	        }
 	
 	        
-	        g.preprocess();
+//	        g.preprocess();
 	        System.out.println("Ready");
 	        
 	        int t = in.nextInt();
@@ -1142,7 +1154,7 @@ public class DistPreprocessSmall {
 	            int u, v;
 	            u = in.nextInt();
 	            v = in.nextInt();
-	            System.out.println(g.biDijkstraCh(u, v));
+//	            System.out.println(g.biDijkstraCh(u, v));
 	        }
 	        in.close();
 	    }
