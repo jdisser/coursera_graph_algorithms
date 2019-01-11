@@ -330,6 +330,8 @@ class BiGraph {
     		rhi = hTable.hash(h.get(rght).index);
     		minhi = hTable.hash(h.get(mini).index);
     		
+    		//TODO: there is a small probability that the hash will not be unique ~ 4/3000 handle this case here
+    		
     		if(left <= li && h.get(left).key < h.get(mini).key) {
         		mini = left;
         	} else {
@@ -390,6 +392,8 @@ class BiGraph {
 			if(h == preProc) {
 				hi = hTable.hash(h.get(i).index);					//use the hash of the index to break ties
 	    		hpi = hTable.hash(h.get(pi).index);
+	    		
+	    		//TODO: there is a small probability that the hash will not be unique ~ 4/3000 handle this case here
 	    		
 	    		if(h.get(pi).key > h.get(i).key) {
 					swap(pi, i, h);
@@ -944,6 +948,7 @@ class TableHash{
 	int bits;
 	int r;
 	int k;
+	int n;
 	
 	
 	public TableHash(int bits, int r) {
@@ -956,22 +961,35 @@ class TableHash{
 			this.hashTable.add(new ArrayList<Integer>());
 		}
 		
-		int m = 2 ^ (bits + 1) - 1;
+		int m = (1 << (bits + 1)) - 1;		//same as 2 ^ (bits + 1) - 1 in ansi c
 		this.k = bits/r;
+		this.n = (1 << (k + 1)) - 1;
+		
+//		System.out.println("Bits: " + bits + " r: " + r + " m: " + m + " k: "+ k + " n: " + n);
+		
 		
 		for(int i = 0; i < r; ++i) {
 			
 			ArrayList<Integer> l = hashTable.get(i);
 			
-			for(int j = 0; j < k; ++j) {
+			for(int j = 0; j < n; ++j) {
 				l.add(Long.valueOf((Math.round(Math.random() * m))).intValue());
 			}
 		}
 		
+		/*
+		System.out.println("HashTable:");
+		for(int i = 0; i < r; ++i) {
+			for(int j = 0; j < n; ++j) {
+				System.out.println("i: " + i + " j: " + j + " htij: " + hashTable.get(i).get(j));
+			}
+		}
+		*/
+		
 		masks = new ArrayList<Integer>();
 		
 		for(int i = 0; i < r; ++i) {
-			int msk = (2^k - 1) << k * i;
+			int msk = ((1 << k) - 1) << k * i;
 			masks.add(i, msk);
 		}
 		
@@ -981,9 +999,12 @@ class TableHash{
 	public int hash(int x) {
 		
 		int result = 0;
+		int hti = 0;
 		
 		for(int i = 0; i < r; ++i) {
-			result ^= hashTable.get(i).get((x & masks.get(i)) >> k * i);
+			hti = (x & masks.get(i)) >> k * i;
+//			System.out.println("hti: " + hti);
+			result ^= hashTable.get(i).get(hti);
 		}
 		
 		return result;
@@ -993,7 +1014,7 @@ class TableHash{
 	
 }
 
-public class DistPreprocessSmall {
+class DistPreprocessSmall {
     
     public static void main(String args[]) {
     	
@@ -1052,6 +1073,16 @@ public class DistPreprocessSmall {
     				}
     				
     				System.out.println("Generated edges: " + edges);
+
+    				HashSet<Integer> test = new HashSet<Integer>();
+    				
+    				System.out.println("Running Hash Table collision test...");
+    				for(int i = 1; i < 3000; ++i) {
+    					int x = tHash.hash(i);
+    					if(test.contains(x))
+    						System.out.println("Collision: " + i + " Hash: " + x);
+    					test.add(x);
+    				}
     				
     				System.out.println("Building Priority Queue: ");
     				g.buildPriorityQueue();
