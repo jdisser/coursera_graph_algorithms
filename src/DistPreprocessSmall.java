@@ -296,8 +296,8 @@ class BiGraph {
     	int li = h.size() - 1;	//0 based last index
     	int left = 2*i + 1;
     	int rght = 2*i + 2;
-    	int lhi;
-    	int rhi;
+    	int lhi = 0;
+    	int rhi = 0;
     	int minhi;
     	
     	if(h == heap) {
@@ -325,9 +325,10 @@ class BiGraph {
         	}
     	}
     	if(h == preProc) {
-    		
-    		lhi = hTable.hash(h.get(left).index);					//use the hash of the index to break ties
-    		rhi = hTable.hash(h.get(rght).index);
+    		if(left <= li)
+    			lhi = hTable.hash(h.get(left).index);					//use the hash of the index to break ties
+    		if(rght <= li)
+    			rhi = hTable.hash(h.get(rght).index);
     		minhi = hTable.hash(h.get(mini).index);
     		
     		//TODO: there is a small probability that the hash will not be unique ~ 4/3000 handle this case here
@@ -357,11 +358,17 @@ class BiGraph {
     }
 	
 	private void printHeap(ArrayList<Node> h) {
-		System.out.print("heap: ");
+		System.out.println();
+		if(h == heap)
+			System.out.print("heap: ");
+		if(h == heapR)
+			System.out.print("heapR: ");
+		if(h == preProc)
+			System.out.print("preProc: ");
 		for(Node n : h) {
-			System.out.print(n.index + ":" + n.dist + " ");
+			System.out.print(h.indexOf(n) + "|" + n.index + ":" + n.key + ", ");
 		}
-		System.out.println(" ");
+		System.out.println();
 	}
 	
 	
@@ -371,25 +378,31 @@ class BiGraph {
 		int pi;
 		int hi;
 		int hpi;
-//		System.out.println(" minSiftUp i: " + i);
-//		printHeap(h);
+		
+		System.out.print(" minSiftUp i: " + i);
+		printHeap(h);
+		System.out.println();
+		
 		if(i > 0) {
 			pi = (i - 1)/2;
 			
-//			System.out.println(" minSiftUp pi: " + pi);
+			
 			if(h == heap) {
+				
 				if(h.get(pi).key > h.get(i).key) {
 					swap(pi, i, h);
 					minSiftUp(pi, h);
 				}
 			} 
 			if(h == heapR) {
+				
 				if(h.get(pi).keyR > h.get(i).keyR) {
 					swap(pi, i, h);
 					minSiftUp(pi, h);
 				}
 			}
 			if(h == preProc) {
+				
 				hi = hTable.hash(h.get(i).index);					//use the hash of the index to break ties
 	    		hpi = hTable.hash(h.get(pi).index);
 	    		
@@ -737,6 +750,8 @@ class BiGraph {
 		
 		//if create, create shortcuts else return the edge difference shortcuts - ins - outs
 		
+		System.out.println("Shortcut contract: " + contract);
+		
 		int shortcuts = 0;
 		
 		initializeQueues();
@@ -907,9 +922,14 @@ class BiGraph {
 	
 	public void buildPriorityQueue() {
 		
-		for(int i = 1; i<= n; ++i) {
+		int priority = 0;
+		
+		for(int i = 1; i < n; ++i) {
+			System.out.println();
+			System.out.print("Processing Node: " + i);
 			Node n = map.get(i);
-			shortcut(n, false, maxHop);
+			priority = shortcut(n, false, maxHop);
+			System.out.println(" Priority: " + priority);
 			n.setPriority();
 			n.setK(true);
 			enQueue(n, preProc);
@@ -918,12 +938,21 @@ class BiGraph {
 	}
 	
 	public void contractGraph() {
+		int loops = 0;
 		while(!preProc.isEmpty()) {
+			++loops;
+			if(loops > 100)
+				break;
 			Node n = getMin(preProc);
+			System.out.println("Pop: " + n.index + " priority: " + n.priority);
 			shortcut(n, false, maxHop);
 			n.setPriority();
 			n.setK(true);
-			if(n != minPriority(n, peek(preProc))) {
+			System.out.println("Reprioritized: " + n.index + " priority: " + n.priority);
+			Node min = peek(preProc);
+			System.out.println("preProc min: " + min.index + " priority: " + min.priority);
+			if(n != minPriority(n, min)) {
+				System.out.println("enQueue: " + n.index + " priority: " + n.priority);
 				enQueue(n, preProc);
 				continue;
 			} else {
@@ -931,7 +960,12 @@ class BiGraph {
 				n.setPriority();
 				n.setK(true);
 				n.processedP = true;
+				System.out.println("contracted: " + n.index + " priority: " + n.priority);
 			}
+			++loops;
+			if(loops > 100)
+				break;
+				
 		}
 		resetWorkingNodes(true);
 	}
@@ -1013,6 +1047,200 @@ class TableHash{
 	}
 	
 }
+
+class PriorityNodeQ {
+	
+	public ArrayList<Node> heap;
+	public HashMap<Node, Long> keyMap;
+	
+	private void decreaseKey(Node dn, long d) {
+	
+		keyMap.put(dn, d);
+		int dni = heap.indexOf(dn);
+		minSiftUp(dni, h);
+	}
+	
+	public void enQueue(Node n) {
+		
+		int end = heap.size();
+		heap.add(end, n);
+		minSiftUp(end);
+		keyMap.put(n, value);
+		
+	}
+	
+	private Node getMin() {
+		
+		Node nm = heap.get(0);
+		swap(0, heap.size() - 1);
+		heap.remove(heap.size() - 1);
+		minSiftDown(0);
+		
+		return nm;
+	}
+	
+	public void initializeQueues() {
+		
+		heap.clear();
+
+		
+	}
+	
+	private void minSiftDown(int i, ArrayList<Node> h) {
+		
+//		System.out.println("minSiftDown 1: " + i);
+//		printHeap();
+		
+    	int mini = i;
+    	int li = h.size() - 1;	//0 based last index
+    	int left = 2*i + 1;
+    	int rght = 2*i + 2;
+    	int lhi = 0;
+    	int rhi = 0;
+    	int minhi;
+    	
+    	if(h == heap) {
+    		if(left <= li && h.get(left).key < h.get(mini).key) {
+        		mini = left;
+        	}
+        	if(rght <= li && h.get(rght).key < h.get(mini).key) {
+        		mini = rght;
+        	}
+        	if(mini != i) {
+    	   		swap(i, mini, h);
+    	   		minSiftDown(mini, h);
+        	}
+    	}
+    	if(h == heapR){
+    		if(left <= li && h.get(left).keyR < h.get(mini).keyR) {
+        		mini = left;
+        	}
+        	if(rght <= li && h.get(rght).keyR < h.get(mini).keyR) {
+        		mini = rght;
+        	}
+        	if(mini != i) {
+    	   		swap(i, mini, h);
+    	   		minSiftDown(mini, h);
+        	}
+    	}
+    	if(h == preProc) {
+    		if(left <= li)
+    			lhi = hTable.hash(h.get(left).index);					//use the hash of the index to break ties
+    		if(rght <= li)
+    			rhi = hTable.hash(h.get(rght).index);
+    		minhi = hTable.hash(h.get(mini).index);
+    		
+    		//TODO: there is a small probability that the hash will not be unique ~ 4/3000 handle this case here
+    		
+    		if(left <= li && h.get(left).key < h.get(mini).key) {
+        		mini = left;
+        	} else {
+        		if(left <= li && h.get(left).key == h.get(mini).key) {
+        			if(lhi < minhi)
+        				mini = left;
+        		}
+        	}
+        	if(rght <= li && h.get(rght).key < h.get(mini).key) {
+        		mini = rght;
+        	} else {
+        		if(rght <= li && h.get(rght).key == h.get(mini).key) {
+        			if(rhi < mini)
+        				mini = rght;
+        		}
+        	}
+        	if(mini != i) {
+    	   		swap(i, mini, h);
+    	   		minSiftDown(mini, h);
+        	}
+    	}
+ 
+    }
+	
+	private void minSiftUp(int i, ArrayList<Node> h) {
+		
+		int pi;
+		int hi;
+		int hpi;
+		
+		System.out.print(" minSiftUp i: " + i);
+		printHeap(h);
+		System.out.println();
+		
+		if(i > 0) {
+			pi = (i - 1)/2;
+			
+			
+			if(h == heap) {
+				
+				if(h.get(pi).key > h.get(i).key) {
+					swap(pi, i, h);
+					minSiftUp(pi, h);
+				}
+			} 
+			if(h == heapR) {
+				
+				if(h.get(pi).keyR > h.get(i).keyR) {
+					swap(pi, i, h);
+					minSiftUp(pi, h);
+				}
+			}
+			if(h == preProc) {
+				
+				hi = hTable.hash(h.get(i).index);					//use the hash of the index to break ties
+	    		hpi = hTable.hash(h.get(pi).index);
+	    		
+	    		//TODO: there is a small probability that the hash will not be unique ~ 4/3000 handle this case here
+	    		
+	    		if(h.get(pi).key > h.get(i).key) {
+					swap(pi, i, h);
+					minSiftUp(pi, h);
+				} else {
+					if(h.get(pi).key == h.get(i).key) {
+						if(hpi > hi) {
+							swap(pi, i, h);
+							minSiftUp(pi, h);
+						}
+					}
+				}	
+			}
+			
+			
+		}
+
+	}
+
+	private Node peek(ArrayList<Node> h) {
+		return h.get(0);
+	}
+	
+	private void printHeap(ArrayList<Node> h) {
+		System.out.println();
+		if(h == heap)
+			System.out.print("heap: ");
+		if(h == heapR)
+			System.out.print("heapR: ");
+		if(h == preProc)
+			System.out.print("preProc: ");
+		for(Node n : h) {
+			System.out.print(h.indexOf(n) + "|" + n.index + ":" + n.key + ", ");
+		}
+		System.out.println();
+	}
+	
+	private void swap(int i, int n, ArrayList<Node> h) {
+    	
+    	Node tn = h.get(i);
+    	h.set(i, h.get(n));
+    	h.set(n, tn);
+    	
+    }
+	
+	
+	
+	
+}
+
+
 
 class DistPreprocessSmall {
     
