@@ -1,4 +1,5 @@
 import java.util.Scanner;
+import java.util.function.BiPredicate;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -1050,14 +1051,37 @@ class TableHash{
 
 class PriorityNodeQ {
 	
-	public ArrayList<Node> heap;
-	public HashMap<Node, Long> keyMap;
+	/*
+	 * This is a general priority queue for graph nodes that can use different node properties as keys
+	 * Two lambda expressions are passed in the constructor for the predicate functions a < b and a == b
+	 * where a & b are Nodes. The Queue is named for diagnostic printing. If tieBreak is passed as true in the
+	 * constructor a hash function is used to order nodes with equal keys.
+	 */
 	
-	private void decreaseKey(Node dn, long d) {
 	
-		keyMap.put(dn, d);
+	private ArrayList<Node> heap;
+	private TableHash hTable;
+	private String name;
+	
+	//these are passed in as a Lambda functions to allow for different Node properties as keys
+	private BiPredicate<Node, Node> minNode;		//test(a,b) -> true if a < b	
+	private BiPredicate<Node, Node> equNode;		//test(a,b) -> true if a = b
+	
+	private boolean tieBreak;						//if tieBreak = true use the hash of the node index as a tiebreaker in sifts
+	
+	public PriorityNodeQ(TableHash hTable, BiPredicate<Node,Node> minNode, BiPredicate<Node,Node> equNode, String name, boolean tieBreak ) {
+		this.hTable = hTable;
+		this.minNode = minNode;
+		this.equNode = equNode;
+		this.name = name;
+		this.tieBreak = tieBreak;
+	}
+	
+	private void decreaseKey(Node dn) {
+	
+		//this method assumes the key property of the Node has been altered prior to the method call
 		int dni = heap.indexOf(dn);
-		minSiftUp(dni, h);
+		minSiftUp(dni);
 	}
 	
 	public void enQueue(Node n) {
@@ -1065,8 +1089,7 @@ class PriorityNodeQ {
 		int end = heap.size();
 		heap.add(end, n);
 		minSiftUp(end);
-		keyMap.put(n, value);
-		
+
 	}
 	
 	private Node getMin() {
@@ -1083,122 +1106,101 @@ class PriorityNodeQ {
 		
 		heap.clear();
 
-		
 	}
 	
-	private void minSiftDown(int i, ArrayList<Node> h) {
+	private void minSiftDown(int i) {
 		
 //		System.out.println("minSiftDown 1: " + i);
 //		printHeap();
 		
     	int mini = i;
-    	int li = h.size() - 1;	//0 based last index
+    	int li = heap.size() - 1;	//0 based last index
     	int left = 2*i + 1;
     	int rght = 2*i + 2;
     	int lhi = 0;
     	int rhi = 0;
     	int minhi;
     	
-    	if(h == heap) {
-    		if(left <= li && h.get(left).key < h.get(mini).key) {
+    	if(!tieBreak) {
+    		if(left <= li && minNode.test(heap.get(left), heap.get(mini))) {	//use the minNode lambda for the test
         		mini = left;
         	}
-        	if(rght <= li && h.get(rght).key < h.get(mini).key) {
+        	if(rght <= li && minNode.test(heap.get(rght), heap.get(mini))) {
         		mini = rght;
         	}
         	if(mini != i) {
-    	   		swap(i, mini, h);
-    	   		minSiftDown(mini, h);
+    	   		swap(i, mini);
+    	   		minSiftDown(mini);
         	}
-    	}
-    	if(h == heapR){
-    		if(left <= li && h.get(left).keyR < h.get(mini).keyR) {
-        		mini = left;
-        	}
-        	if(rght <= li && h.get(rght).keyR < h.get(mini).keyR) {
-        		mini = rght;
-        	}
-        	if(mini != i) {
-    	   		swap(i, mini, h);
-    	   		minSiftDown(mini, h);
-        	}
-    	}
-    	if(h == preProc) {
+    	}  else {
+    		
     		if(left <= li)
-    			lhi = hTable.hash(h.get(left).index);					//use the hash of the index to break ties
+    			lhi = hTable.hash(heap.get(left).index);					//use the hash of the index to break ties
     		if(rght <= li)
-    			rhi = hTable.hash(h.get(rght).index);
-    		minhi = hTable.hash(h.get(mini).index);
+    			rhi = hTable.hash(heap.get(rght).index);
+    		minhi = hTable.hash(heap.get(mini).index);
     		
     		//TODO: there is a small probability that the hash will not be unique ~ 4/3000 handle this case here
     		
-    		if(left <= li && h.get(left).key < h.get(mini).key) {
+    		if(left <= li && minNode.test(heap.get(left), heap.get(mini))) {
         		mini = left;
         	} else {
-        		if(left <= li && h.get(left).key == h.get(mini).key) {
+        		if(left <= li && equNode.test(heap.get(left), heap.get(mini))) {
         			if(lhi < minhi)
         				mini = left;
         		}
         	}
-        	if(rght <= li && h.get(rght).key < h.get(mini).key) {
+        	if(rght <= li && minNode.test(heap.get(rght), heap.get(mini))) {
         		mini = rght;
         	} else {
-        		if(rght <= li && h.get(rght).key == h.get(mini).key) {
+        		if(rght <= li && equNode.test(heap.get(rght), heap.get(mini))) {
         			if(rhi < mini)
         				mini = rght;
         		}
         	}
         	if(mini != i) {
-    	   		swap(i, mini, h);
-    	   		minSiftDown(mini, h);
+    	   		swap(i, mini);
+    	   		minSiftDown(mini);
         	}
     	}
  
     }
 	
-	private void minSiftUp(int i, ArrayList<Node> h) {
+	private void minSiftUp(int i) {
 		
 		int pi;
 		int hi;
 		int hpi;
 		
 		System.out.print(" minSiftUp i: " + i);
-		printHeap(h);
+		printHeap();
 		System.out.println();
 		
 		if(i > 0) {
 			pi = (i - 1)/2;
 			
 			
-			if(h == heap) {
+			if(!tieBreak) {
 				
-				if(h.get(pi).key > h.get(i).key) {
-					swap(pi, i, h);
-					minSiftUp(pi, h);
+				if(minNode.test(heap.get(pi), heap.get(i))) {
+					swap(pi, i);
+					minSiftUp(pi);
 				}
-			} 
-			if(h == heapR) {
+			} else {
 				
-				if(h.get(pi).keyR > h.get(i).keyR) {
-					swap(pi, i, h);
-					minSiftUp(pi, h);
-				}
-			}
-			if(h == preProc) {
-				
-				hi = hTable.hash(h.get(i).index);					//use the hash of the index to break ties
-	    		hpi = hTable.hash(h.get(pi).index);
+				hi = hTable.hash(heap.get(i).index);					//use the hash of the index to break ties
+	    		hpi = hTable.hash(heap.get(pi).index);
 	    		
 	    		//TODO: there is a small probability that the hash will not be unique ~ 4/3000 handle this case here
 	    		
-	    		if(h.get(pi).key > h.get(i).key) {
-					swap(pi, i, h);
-					minSiftUp(pi, h);
+	    		if(minNode.test(heap.get(pi), heap.get(i))) {
+					swap(pi, i);
+					minSiftUp(pi);
 				} else {
-					if(h.get(pi).key == h.get(i).key) {
+					if(equNode.test(heap.get(pi), heap.get(i))) {
 						if(hpi > hi) {
-							swap(pi, i, h);
-							minSiftUp(pi, h);
+							swap(pi, i);
+							minSiftUp(pi);
 						}
 					}
 				}	
@@ -1209,29 +1211,26 @@ class PriorityNodeQ {
 
 	}
 
-	private Node peek(ArrayList<Node> h) {
-		return h.get(0);
+	private Node peek() {
+		return heap.get(0);
 	}
 	
-	private void printHeap(ArrayList<Node> h) {
+	private void printHeap() {
 		System.out.println();
-		if(h == heap)
-			System.out.print("heap: ");
-		if(h == heapR)
-			System.out.print("heapR: ");
-		if(h == preProc)
-			System.out.print("preProc: ");
-		for(Node n : h) {
-			System.out.print(h.indexOf(n) + "|" + n.index + ":" + n.key + ", ");
+		
+		
+		System.out.println(name + ": ");
+		for(Node n : heap) {
+			System.out.print(heap.indexOf(n) + "|" + n.index + ":" + n.key + ", ");
 		}
 		System.out.println();
 	}
 	
-	private void swap(int i, int n, ArrayList<Node> h) {
+	private void swap(int i, int n) {
     	
-    	Node tn = h.get(i);
-    	h.set(i, h.get(n));
-    	h.set(n, tn);
+    	Node tn = heap.get(i);
+    	heap.set(i, heap.get(n));
+    	heap.set(n, tn);
     	
     }
 	
