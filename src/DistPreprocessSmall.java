@@ -1,5 +1,7 @@
 import java.util.Scanner;
 import java.util.function.BiPredicate;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -34,8 +36,8 @@ class Node {
 	public int rank;				//order of node in contracted graph
 	public int edgeDiff;			//shortcuts - inDegree - outDegree
 	public int hops;				//number of edges from source used to terminate contraction
-	public long key;				//The key used in the priority queue
-	public long keyR;				//the reverse search key
+//	public long key;				//The key used in the priority queue
+//	public long keyR;				//the reverse search key
 	public long shortcutDist;		//the minimum distance u->v->w for a shortcut to be created
 	public int shortcuts;
 	
@@ -62,26 +64,27 @@ class Node {
         this.rank = 0;
         this.edgeDiff = 0;
         this.hops = Integer.MAX_VALUE;
-        this.key = 0;
-        this.keyR = 0;
+//        this.key = 0;
+//        this.keyR = 0;
         this.shortcutDist = INFINITY;
         this.shortcuts = 0;
 	}
 	
 	
 	//Note: this method does NOT reset the shortcuts, contracted, level
-	public void resetNode(boolean reactivate) {
+	public void resetNodeDijkstra() {
 		this.dist = INFINITY;
         this.distR = INFINITY;
         this.processed = false;
         this.processedR = false;
-        this.processedP = false;
         this.queued = false;
         this.queuedR = false;
         this.parent = null;
         this.parentR = null;
-        this.key = 0;
-        this.keyR = 0;
+
+	}
+
+	public void resetNodeShortcut(boolean reactivate) {
         if(reactivate)
         	this.active = true;
         this.hops = Integer.MAX_VALUE;
@@ -95,13 +98,12 @@ class Node {
 
         this.shortcutDist = INFINITY;
 	}
-
 	
 	public static int nodeNumber(int i, int j, int w) {	//1 index position of node in test graph w x h
 		return w*(j - 1) + i;
 	}
 	
-	
+/*	
 	public long setK() {
 		key = dist ;
 		return key;
@@ -129,7 +131,7 @@ class Node {
 		
 		return keyR;
 	}
-	
+*/
 	public void setPriority() {
 		this.priority = this.edgeDiff + this.neighbors + this.shortcuts + this.level;
 	}
@@ -184,11 +186,11 @@ class BiGraph {
 	
 	public ArrayList<ArrayList<Edge>> graph;		//adjacency list of edges
 	public ArrayList<ArrayList<Edge>> graphR;		//adjacency list of reversed edges
-	public ArrayList<Node> heap;					//priority queue with method to update key values
-	public ArrayList<Node> heapR;					//priority queue for reversed graph
-	public ArrayList<Node> preProc;					//priority queue for graph preprocessing
+	public PriorityNodeQ heap;						//priority queue with method to update key values
+	public PriorityNodeQ heapR;						//priority queue for reversed graph
+	public PriorityNodeQ preProc;					//priority queue for graph preprocessing
 	public HashMap<Integer,Node> map;				//returns Nodes by vertex (index)
-	public HashSet<Node> working;					//all nodes processed by query that must be reset
+	
 	
 	public final long INFINITY = Long.MAX_VALUE / 4;
 
@@ -211,10 +213,9 @@ class BiGraph {
         this.graph = new ArrayList<ArrayList<Edge>>();
         this.graphR = new ArrayList<ArrayList<Edge>>();
         
-        this.heap = new ArrayList<Node>();
-        this.heapR = new ArrayList<Node>();
-        
-        this.preProc = new ArrayList<Node>();
+        this.heap = new PriorityNodeQ(ht, (a , b) -> a.dist < b.dist, (a, b) -> a.dist == b.dist, "heap", false);
+        this.heapR = new PriorityNodeQ(ht, (a , b) -> a.distR < b.distR, (a, b) -> a.distR == b.distR, "heapR", false);
+        this.preProc = new PriorityNodeQ(ht, (a , b) -> a.priority < b.priority, (a, b) -> a.priority == b.priority, "preProc", true);
         
         
         
@@ -247,12 +248,15 @@ class BiGraph {
 	
 	public void initializeQueues() {
 		
-		heap.clear();
-		heapR.clear();
+		heap.initializeQueues();
+		heapR.initializeQueues();
 		
 	}
 	
 	public void resetWorkingNodes(boolean reactivate) {
+		
+		//TODO: how to handle resetting nodes for the different queue types??? source of original sin???
+		
 		if(!working.isEmpty()) {
 			for(Node n: working) {
 				n.resetNode(reactivate);
@@ -261,16 +265,16 @@ class BiGraph {
 		}
 		
 	}
-	
-	public void enQueue(Node n, ArrayList<Node> h) {
+	/*
+	public void enQueue(Node n, PriorityNodeQ h) {
 		
-		int end = h.size();
-		h.add(end, n);
+		
+		h.add(n);
 		minSiftUp(end, h);
 //		working.add(n);
 		
 	}
-	
+	*/
 	
 	public void addEdges(int s, int t, int c) {		//(source, target, length in 1 based indexing)
 
@@ -287,7 +291,7 @@ class BiGraph {
 
 	}
 	
-	
+	/*
 	private void minSiftDown(int i, ArrayList<Node> h) {
 		
 //		System.out.println("minSiftDown 1: " + i);
@@ -357,7 +361,9 @@ class BiGraph {
     	}
  
     }
+	*/
 	
+	/*
 	private void printHeap(ArrayList<Node> h) {
 		System.out.println();
 		if(h == heap)
@@ -371,9 +377,9 @@ class BiGraph {
 		}
 		System.out.println();
 	}
+	*/
 	
-	
-	
+	/*
 	private void minSiftUp(int i, ArrayList<Node> h) {
 		
 		int pi;
@@ -426,7 +432,8 @@ class BiGraph {
 		}
 
 	}
-	
+	*/
+	/*
 	private Node getMin(ArrayList<Node> h) {
 		
 		Node nm = h.get(0);
@@ -436,10 +443,12 @@ class BiGraph {
 		
 		return nm;
 	}
-	
+	*/
+	/*
 	private Node peek(ArrayList<Node> h) {
 		return h.get(0);
 	}
+	*/
 	
 	public Node minPriority(Node a, Node b) {
 		//returns minimum priority node with hash tiebreaker
@@ -463,6 +472,7 @@ class BiGraph {
 		
 	}
 
+	/*
 	private void decreaseKey(Node dn, long d, ArrayList<Node> h) {
 		
 //		System.out.println(" decreaseKey i: " + i + " d: " + d);
@@ -483,9 +493,9 @@ class BiGraph {
 		int dni = h.indexOf(dn);
 		minSiftUp(dni, h);
 	}
+	*/
 	
-	
-    
+    /*
     private void swap(int i, int n, ArrayList<Node> h) {
     	
     	Node tn = h.get(i);
@@ -493,7 +503,7 @@ class BiGraph {
     	h.set(n, tn);
     	
     }
-    
+    */
     private long shortestPath() {
     	long d = INFINITY;
     	long dn = 0;
@@ -504,6 +514,9 @@ class BiGraph {
     	return d;					
     }
 	
+    //TODO  This method is to be rewritten as a bidirectional dijkstra with rank
+    /*
+     *
 	public long biAStar(int s, int t) {	//s & t are 0 indexed integers from the graph data
 		
 		//implements  bidirectional A* algorithm
@@ -583,21 +596,21 @@ class BiGraph {
 				++processed;
 				
 				if(processing.processedR == true) {	
-					/*
-					long tp = processing.dist + processing.distR;
-					++dblProcessed;
-					if( tp < mu) {
-						mu = tp; 
-						result = mu;
-						cNode = processing.index;
-					}
-					if(!heap.isEmpty()) {
-						if(heap.get(0).k > mu && heapR.get(0).kr > mu) {
-							System.out.println("Exiting on break");
-							break;
-						}
-					}
-					 */
+					
+//					long tp = processing.dist + processing.distR;
+//					++dblProcessed;
+//					if( tp < mu) {
+//						mu = tp; 
+//						result = mu;
+//						cNode = processing.index;
+//					}
+//					if(!heap.isEmpty()) {
+//						if(heap.get(0).k > mu && heapR.get(0).kr > mu) {
+//							System.out.println("Exiting on break");
+//							break;
+//						}
+//					}
+					
 					result = shortestPath();
 					break;
 										
@@ -637,19 +650,19 @@ class BiGraph {
 				processingR.processedR = true;
 				++processed;
 				if(processingR.processed == true) {
-					/*
-					long tp = processingR.dist + processingR.distR;
-					++dblProcessed;
-					if( tp < mu) {
-						mu = tp;
-						result = mu;
-					}
-					if(!heapR.isEmpty()) {
-						if(heap.get(0).k > mu && heapR.get(0).kr > mu) {
-							break;
-						}
-					}
-					*/
+					
+//					long tp = processingR.dist + processingR.distR;
+//					++dblProcessed;
+//					if( tp < mu) {
+//						mu = tp;
+//						result = mu;
+//					}
+//					if(!heapR.isEmpty()) {
+//						if(heap.get(0).k > mu && heapR.get(0).kr > mu) {
+//							break;
+//						}
+//					}
+					
 					result = shortestPath();
 					break;
 				}
@@ -661,7 +674,9 @@ class BiGraph {
 //		System.out.println("BiAStar double processed nodes: " + dblProcessed);
 		return result;
     }
-	
+	*/
+    
+    
 	public long dijkstra(int s, int t) {
 		
 		//this is a checking method using the simple Dijkstra algorithm for testing
@@ -1061,31 +1076,47 @@ class PriorityNodeQ {
 	
 	private ArrayList<Node> heap;
 	private TableHash hTable;
+	public HashSet<Node> working;					//all nodes processed in this queue that must be reset
 	private String name;
 	
 	//these are passed in as a Lambda functions to allow for different Node properties as keys
 	private BiPredicate<Node, Node> minNode;		//test(a,b) -> true if a < b	
 	private BiPredicate<Node, Node> equNode;		//test(a,b) -> true if a = b
+
+	
+	private Consumer<Node> resetNode;				//resets the properties of nodes used in this queue
+	private Function<Node, ? extends Number> getKey;
 	
 	private boolean tieBreak;						//if tieBreak = true use the hash of the node index as a tiebreaker in sifts
 	
-	public PriorityNodeQ(TableHash hTable, BiPredicate<Node,Node> minNode, BiPredicate<Node,Node> equNode, String name, boolean tieBreak ) {
+	public PriorityNodeQ(
+			TableHash hTable,
+			BiPredicate<Node,Node> minNode,
+			BiPredicate<Node,Node> equNode,
+			Consumer<Node> resetNode,
+			Function<Node, ? extends Number> getKey,
+			String name,
+			boolean tieBreak ) {
+		
 		this.hTable = hTable;
 		this.minNode = minNode;
 		this.equNode = equNode;
+		this.resetNode = resetNode;
+		this.getKey = getKey;
 		this.name = name;
 		this.tieBreak = tieBreak;
 	}
 	
 	private void decreaseKey(Node dn) {
 	
-		//this method assumes the key property of the Node has been altered prior to the method call
+		//this method assumes the property used as a key of the Node has been altered prior to the method call
 		int dni = heap.indexOf(dn);
 		minSiftUp(dni);
 	}
 	
 	public void enQueue(Node n) {
 		
+		working.add(n);				
 		int end = heap.size();
 		heap.add(end, n);
 		minSiftUp(end);
@@ -1173,7 +1204,7 @@ class PriorityNodeQ {
 		int hpi;
 		
 		System.out.print(" minSiftUp i: " + i);
-		printHeap();
+//		printHeap();
 		System.out.println();
 		
 		if(i > 0) {
@@ -1221,10 +1252,11 @@ class PriorityNodeQ {
 		
 		System.out.println(name + ": ");
 		for(Node n : heap) {
-			System.out.print(heap.indexOf(n) + "|" + n.index + ":" + n.key + ", ");
+			System.out.print(heap.indexOf(n) + "|" + n.index + ":" + getKey.apply(n) + ", ");
 		}
 		System.out.println();
 	}
+	
 	
 	private void swap(int i, int n) {
     	
@@ -1233,6 +1265,17 @@ class PriorityNodeQ {
     	heap.set(n, tn);
     	
     }
+	
+	public void resetWorkingNodes() {
+		
+		if(!working.isEmpty()) {
+			for(Node n: working) {
+				resetNode.accept(n);;
+			}
+			working.clear();
+		}
+		
+	}
 	
 	
 	
