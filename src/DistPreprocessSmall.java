@@ -36,8 +36,6 @@ class Node {
 	public int rank;				//order of node in contracted graph
 	public int edgeDiff;			//shortcuts - inDegree - outDegree
 	public int hops;				//number of edges from source used to terminate contraction
-//	public long key;				//The key used in the priority queue
-//	public long keyR;				//the reverse search key
 	public long shortcutDist;		//the minimum distance u->v->w for a shortcut to be created
 	public int shortcuts;
 	
@@ -64,78 +62,16 @@ class Node {
         this.rank = 0;
         this.edgeDiff = 0;
         this.hops = Integer.MAX_VALUE;
-//        this.key = 0;
-//        this.keyR = 0;
         this.shortcutDist = INFINITY;
         this.shortcuts = 0;
 	}
 	
-	/*
-	 * 
-	 * TODO replace references to these methods with lambdas passed to the PriorityNodeQ
-	 * 
-	 * 
-	//Note: this method does NOT reset the shortcuts, contracted, level
-	public void resetNodeDijkstra() {
-		this.dist = INFINITY;
-        this.distR = INFINITY;
-        this.processed = false;
-        this.processedR = false;
-        this.queued = false;
-        this.queuedR = false;
-        this.parent = null;
-        this.parentR = null;
-
-	}
-
-	public void resetNodeShortcut(boolean reactivate) {
-        if(reactivate)
-        	this.active = true;
-        this.hops = Integer.MAX_VALUE;
-        
-        //these properties are persistent during buildPriorityQueue and shortcut(true) for contraction
-//        this.level = 0;
-//        this.priority = 0;
-//        this.neighbors = 0;
-//        this.rank = 0;
-//        this.edgeDiff = 0;
-
-        this.shortcutDist = INFINITY;
-	}
-	*/
+	
 	public static int nodeNumber(int i, int j, int w) {	//1 index position of node in test graph w x h
 		return w*(j - 1) + i;
 	}
 	
-/*	
-	public long setK() {
-		key = dist ;
-		return key;
-	}
-	
-	public long setK(boolean prioritize) {
-		if(prioritize)
-			key = priority;
-		else
-			key = dist;
-		return key;
-	}
-	
-	public long setKr() {
-		keyR = distR;					
-		return keyR;
-	}
-	
-	public long setKr(boolean prioritize) {
-		
-		if(prioritize)
-			keyR = priority;					
-		else
-			keyR = distR;
-		
-		return keyR;
-	}
-*/
+
 	public void setPriority() {
 		this.priority = this.edgeDiff + this.neighbors + this.shortcuts + this.level;
 	}
@@ -222,6 +158,9 @@ class BiGraph {
             nd.processed = false;
             nd.queued = false;
             nd.parent = null;
+            nd.hops = Integer.MAX_VALUE;		//this field is used in the shortcut method to limit the dijkstra search
+            nd.shortcutDist = INFINITY;			//used in shortcut to determine witness paths
+            nd.active = true;					//used to remove the node during the shortcut search
         };
         
         Function<Node, Long> getHeapKey = (nd) -> { return nd.dist; };
@@ -236,15 +175,12 @@ class BiGraph {
         Function<Node, Long> getHeapRKey = (nd) -> { return nd.distR; };
         
         Consumer<Node> resetPreProc = (nd) -> {
-        	
-            nd.active = true;
-            nd.hops = Integer.MAX_VALUE;
-            nd.shortcutDist = INFINITY;
+
             nd.queuedP = false;
             nd.processedP = false;
-            //these properties are persistent during buildPriorityQueue and shortcut(true) for contraction
+            nd.priority = 0;
+            //these Node properties are persisted after buildPriorityQueue and shortcut(true) contraction
 //            this.level = 0;
-//            this.priority = 0;
 //            this.neighbors = 0;
 //            this.rank = 0;
 //            this.edgeDiff = 0;
@@ -260,7 +196,7 @@ class BiGraph {
         
         this.map = new HashMap<Integer,Node>(n+1);
         
-        this.working = new HashSet<Node>();
+        
         
         for (int i = 0; i <= n; i++) {					//graph indexes and nodes are 1 indexed, index 0 not used
         	
@@ -272,45 +208,19 @@ class BiGraph {
         this.processed = 0;
   
 	}
-	
-	
-	
-	
-	
-	
-	
+
 	public Node addNode(int i) {
 		Node n = new Node(i);
 		map.put(i, n);
 		return n;
 	}
 	
+	/*
 	public void initializeQueues() {
 		
-		heap.initializeQueues();
-		heapR.initializeQueues();
-		
-	}
-	
-	public void resetWorkingNodes(boolean reactivate) {
-		
-		//TODO: how to handle resetting nodes for the different queue types??? source of original sin???
-		
-		if(!working.isEmpty()) {
-			for(Node n: working) {
-				n.resetNode(reactivate);
-			}
-			working.clear();
-		}
-		
-	}
-	/*
-	public void enQueue(Node n, PriorityNodeQ h) {
-		
-		
-		h.add(n);
-		minSiftUp(end, h);
-//		working.add(n);
+		heap.initializeQueue();
+		heapR.initializeQueue();
+		preProc.initializeQueue();
 		
 	}
 	*/
@@ -330,165 +240,7 @@ class BiGraph {
 
 	}
 	
-	/*
-	private void minSiftDown(int i, ArrayList<Node> h) {
-		
-//		System.out.println("minSiftDown 1: " + i);
-//		printHeap();
-		
-    	int mini = i;
-    	int li = h.size() - 1;	//0 based last index
-    	int left = 2*i + 1;
-    	int rght = 2*i + 2;
-    	int lhi = 0;
-    	int rhi = 0;
-    	int minhi;
-    	
-    	if(h == heap) {
-    		if(left <= li && h.get(left).key < h.get(mini).key) {
-        		mini = left;
-        	}
-        	if(rght <= li && h.get(rght).key < h.get(mini).key) {
-        		mini = rght;
-        	}
-        	if(mini != i) {
-    	   		swap(i, mini, h);
-    	   		minSiftDown(mini, h);
-        	}
-    	}
-    	if(h == heapR){
-    		if(left <= li && h.get(left).keyR < h.get(mini).keyR) {
-        		mini = left;
-        	}
-        	if(rght <= li && h.get(rght).keyR < h.get(mini).keyR) {
-        		mini = rght;
-        	}
-        	if(mini != i) {
-    	   		swap(i, mini, h);
-    	   		minSiftDown(mini, h);
-        	}
-    	}
-    	if(h == preProc) {
-    		if(left <= li)
-    			lhi = hTable.hash(h.get(left).index);					//use the hash of the index to break ties
-    		if(rght <= li)
-    			rhi = hTable.hash(h.get(rght).index);
-    		minhi = hTable.hash(h.get(mini).index);
-    		
-    		//TODO: there is a small probability that the hash will not be unique ~ 4/3000 handle this case here
-    		
-    		if(left <= li && h.get(left).key < h.get(mini).key) {
-        		mini = left;
-        	} else {
-        		if(left <= li && h.get(left).key == h.get(mini).key) {
-        			if(lhi < minhi)
-        				mini = left;
-        		}
-        	}
-        	if(rght <= li && h.get(rght).key < h.get(mini).key) {
-        		mini = rght;
-        	} else {
-        		if(rght <= li && h.get(rght).key == h.get(mini).key) {
-        			if(rhi < mini)
-        				mini = rght;
-        		}
-        	}
-        	if(mini != i) {
-    	   		swap(i, mini, h);
-    	   		minSiftDown(mini, h);
-        	}
-    	}
- 
-    }
-	*/
-	
-	/*
-	private void printHeap(ArrayList<Node> h) {
-		System.out.println();
-		if(h == heap)
-			System.out.print("heap: ");
-		if(h == heapR)
-			System.out.print("heapR: ");
-		if(h == preProc)
-			System.out.print("preProc: ");
-		for(Node n : h) {
-			System.out.print(h.indexOf(n) + "|" + n.index + ":" + n.key + ", ");
-		}
-		System.out.println();
-	}
-	*/
-	
-	/*
-	private void minSiftUp(int i, ArrayList<Node> h) {
-		
-		int pi;
-		int hi;
-		int hpi;
-		
-		System.out.print(" minSiftUp i: " + i);
-		printHeap(h);
-		System.out.println();
-		
-		if(i > 0) {
-			pi = (i - 1)/2;
-			
-			
-			if(h == heap) {
-				
-				if(h.get(pi).key > h.get(i).key) {
-					swap(pi, i, h);
-					minSiftUp(pi, h);
-				}
-			} 
-			if(h == heapR) {
-				
-				if(h.get(pi).keyR > h.get(i).keyR) {
-					swap(pi, i, h);
-					minSiftUp(pi, h);
-				}
-			}
-			if(h == preProc) {
-				
-				hi = hTable.hash(h.get(i).index);					//use the hash of the index to break ties
-	    		hpi = hTable.hash(h.get(pi).index);
-	    		
-	    		//TODO: there is a small probability that the hash will not be unique ~ 4/3000 handle this case here
-	    		
-	    		if(h.get(pi).key > h.get(i).key) {
-					swap(pi, i, h);
-					minSiftUp(pi, h);
-				} else {
-					if(h.get(pi).key == h.get(i).key) {
-						if(hpi > hi) {
-							swap(pi, i, h);
-							minSiftUp(pi, h);
-						}
-					}
-				}	
-			}
-			
-			
-		}
-
-	}
-	*/
-	/*
-	private Node getMin(ArrayList<Node> h) {
-		
-		Node nm = h.get(0);
-		swap(0, h.size() - 1, h);
-		h.remove(h.size() - 1);
-		minSiftDown(0, h);
-		
-		return nm;
-	}
-	*/
-	/*
-	private Node peek(ArrayList<Node> h) {
-		return h.get(0);
-	}
-	*/
-	
+	//TODO: determine if this should be in the PriorityNodeQ Class
 	public Node minPriority(Node a, Node b) {
 		//returns minimum priority node with hash tiebreaker
 		
@@ -511,38 +263,8 @@ class BiGraph {
 		
 	}
 
+	//TODO: need a combined working set!!
 	/*
-	private void decreaseKey(Node dn, long d, ArrayList<Node> h) {
-		
-//		System.out.println(" decreaseKey i: " + i + " d: " + d);
-		
-		if(h == heapR) {
-			dn.distR = d;
-			dn.setKr();	//no reverse search in priority queue
-		} 
-		if(h == heap) {
-			dn.dist = d;
-			dn.setK();
-		}
-		if(h == preProc) {
-			dn.setPriority();
-			dn.setK(true);
-		}		
-		
-		int dni = h.indexOf(dn);
-		minSiftUp(dni, h);
-	}
-	*/
-	
-    /*
-    private void swap(int i, int n, ArrayList<Node> h) {
-    	
-    	Node tn = h.get(i);
-    	h.set(i, h.get(n));
-    	h.set(n, tn);
-    	
-    }
-    */
     private long shortestPath() {
     	long d = INFINITY;
     	long dn = 0;
@@ -552,6 +274,7 @@ class BiGraph {
     	}
     	return d;					
     }
+	*/
 	
     //TODO  This method is to be rewritten as a bidirectional dijkstra with rank
     /*
@@ -718,26 +441,22 @@ class BiGraph {
     
 	public long dijkstra(int s, int t) {
 		
-		//this is a checking method using the simple Dijkstra algorithm for testing
-		
-		
-
 		long mu = INFINITY;
 		processed = 0;
 		
-		initializeQueues();
-		resetWorkingNodes(true);
+		heap.initializeQueue();
+		heap.resetWorkingNodes();
 
 		
 		Node sn = map.get(s);
 		Node tn = map.get(t);
 		
 		sn.dist = 0;
-		sn.setK();							
+								
 	
-		enQueue(sn, heap);
+		heap.enQueue(sn);
 		sn.queued = true;
-		working.add(sn);								//add the initial nodes to the working set	
+		
 		
 		if(s == t) {
 			return 0;									//I found myself!!
@@ -747,7 +466,7 @@ class BiGraph {
 	
 		while(!heap.isEmpty()) {						//process the next node in the forward graph
 			
-			Node processing = getMin(heap);
+			Node processing = heap.getMin();
 			processing.queued = false;
 			
 //				System.out.println("processing Node: " + processing.index);
@@ -760,15 +479,13 @@ class BiGraph {
 				
 					if(tt.dist > td) {
 							
-							working.add(tt);
-							
 							if(tt.queued == false) {	
 								tt.dist = td;
-								tt.setK();
-								enQueue(tt, heap);
+								heap.enQueue(tt);
 								tt.queued = true;
 							} else {
-								decreaseKey(tt, td, heap);		//use the unidirectional non potential version of the method
+								tt.dist = td;
+								heap.decreaseKey(tt);
 							}
 
 //							tt.pindex = processing.index;				//min path is my daddy
@@ -790,7 +507,7 @@ class BiGraph {
 			
 			if(tn.processed == true) {				
 				if(!heap.isEmpty()) {
-					if(heap.get(0).key > mu) {	//stop when the shortest queued node distance is longer than the shortest path found
+					if(heap.peek().dist > mu) {	//stop when the shortest queued node distance is longer than the shortest path found
 						break;
 					}
 				}
@@ -809,7 +526,7 @@ class BiGraph {
 		
 		int shortcuts = 0;
 		
-		initializeQueues();
+		heap.initializeQueue();		
 		
 		ArrayList<Edge> inEdges = graphR.get(v.index);
 		ArrayList<Edge> outEdges = graph.get(v.index);
@@ -844,11 +561,11 @@ class BiGraph {
 		
 		for(Node u : us) {				//check for a witness path to each target
 			
-			resetWorkingNodes(true);	
+			heap.resetWorkingNodes();	
 			
 			long mu = 0;
 			processed = 0;
-			initializeQueues();
+			heap.initializeQueue();
 			
 			long uvDist = 0;
 			u.dist = 0;
@@ -883,17 +600,12 @@ class BiGraph {
 			
 			long dijkstraStop = maxShortcut - minRevDist;
 
-			u.setK();							
-		
-			enQueue(u, heap);
+			heap.enQueue(u);
 			u.queued = true;
-			working.add(u);									//add the initial node to the working set
 			
-			
-		
 			while(!heap.isEmpty()) {						//process the next node in the forward graph
 				
-				Node x = getMin(heap);
+				Node x = heap.getMin();
 				x.queued = false;
 				mu = Math.max(mu, x.dist);
 				if(mu >= dijkstraStop || x.hops > hops)		//stopping conditions are max d(u,w) > max (d(u,v)+d(v,w)) - min(x,w) || hops > hops parameter 
@@ -911,7 +623,7 @@ class BiGraph {
 						if(tt.dist > td) {
 								if(ws.contains(tt)) {
 									//tt is a target node and is never queued
-									working.add(tt);
+									heap.working.add(tt);
 									tt.dist = td;
 									tt.parent = x;
 									tt.hops = x.hops + 1;
@@ -919,12 +631,11 @@ class BiGraph {
 									if(tt.queued == false) {
 										tt.hops = x.hops + 1;
 										tt.dist = td;
-										tt.setK();
-										enQueue(tt, heap);
+										heap.enQueue(tt);
 										tt.queued = true;
-										working.add(tt);
 									} else {
-										decreaseKey(tt, td, heap);		//use the unidirectional non potential version of the method
+										tt.dist = td;
+										heap.decreaseKey(tt);		
 										tt.hops = x.hops + 1;
 									}
 								}
@@ -956,8 +667,8 @@ class BiGraph {
 			}
 		}
 
-		working.add(v);
-		resetWorkingNodes(true);							//reactivate the contracted node!! It remains in the graph!!
+		heap.working.add(v);
+		heap.resetWorkingNodes();							
 		v.shortcuts = shortcuts;
 		v.edgeDiff = shortcuts - ins - outs;				//set the edge difference NOTE: call setPriority on a node to update the priority property
 		if(contract) {
@@ -986,8 +697,7 @@ class BiGraph {
 			priority = shortcut(n, false, maxHop);
 			System.out.println(" Priority: " + priority);
 			n.setPriority();
-			n.setK(true);
-			enQueue(n, preProc);
+			preProc.enQueue(n);
 			n.queuedP = true;
 		}
 	}
@@ -998,22 +708,20 @@ class BiGraph {
 			++loops;
 			if(loops > 100)
 				break;
-			Node n = getMin(preProc);
+			Node n = preProc.getMin();
 			System.out.println("Pop: " + n.index + " priority: " + n.priority);
 			shortcut(n, false, maxHop);
 			n.setPriority();
-			n.setK(true);
 			System.out.println("Reprioritized: " + n.index + " priority: " + n.priority);
-			Node min = peek(preProc);
+			Node min = preProc.peek();
 			System.out.println("preProc min: " + min.index + " priority: " + min.priority);
 			if(n != minPriority(n, min)) {
 				System.out.println("enQueue: " + n.index + " priority: " + n.priority);
-				enQueue(n, preProc);
+				preProc.enQueue(n);
 				continue;
 			} else {
 				shortcut(n, true, maxHop);
 				n.setPriority();
-				n.setK(true);
 				n.processedP = true;
 				System.out.println("contracted: " + n.index + " priority: " + n.priority);
 			}
@@ -1022,11 +730,9 @@ class BiGraph {
 				break;
 				
 		}
-		resetWorkingNodes(true);
+		preProc.resetWorkingNodes();
 	}
-	
-	
-	
+
 }
 
 class TableHash{
@@ -1146,7 +852,7 @@ class PriorityNodeQ {
 		this.tieBreak = tieBreak;
 	}
 	
-	private void decreaseKey(Node dn) {
+	public void decreaseKey(Node dn) {
 	
 		//this method assumes the property used as a key of the Node has been altered prior to the method call
 		int dni = heap.indexOf(dn);
@@ -1172,7 +878,7 @@ class PriorityNodeQ {
 		return nm;
 	}
 	
-	public void initializeQueues() {
+	public void initializeQueue() {
 		
 		heap.clear();
 
@@ -1314,6 +1020,10 @@ class PriorityNodeQ {
 			working.clear();
 		}
 		
+	}
+	
+	public boolean isEmpty() {
+		return heap.isEmpty();
 	}
 	
 	
