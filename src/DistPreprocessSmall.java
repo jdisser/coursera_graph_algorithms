@@ -70,7 +70,11 @@ class Node {
         this.shortcuts = 0;
 	}
 	
-	
+	/*
+	 * 
+	 * TODO replace references to these methods with lambdas passed to the PriorityNodeQ
+	 * 
+	 * 
 	//Note: this method does NOT reset the shortcuts, contracted, level
 	public void resetNodeDijkstra() {
 		this.dist = INFINITY;
@@ -98,7 +102,7 @@ class Node {
 
         this.shortcutDist = INFINITY;
 	}
-	
+	*/
 	public static int nodeNumber(int i, int j, int w) {	//1 index position of node in test graph w x h
 		return w*(j - 1) + i;
 	}
@@ -213,9 +217,44 @@ class BiGraph {
         this.graph = new ArrayList<ArrayList<Edge>>();
         this.graphR = new ArrayList<ArrayList<Edge>>();
         
-        this.heap = new PriorityNodeQ(ht, (a , b) -> a.dist < b.dist, (a, b) -> a.dist == b.dist, "heap", false);
-        this.heapR = new PriorityNodeQ(ht, (a , b) -> a.distR < b.distR, (a, b) -> a.distR == b.distR, "heapR", false);
-        this.preProc = new PriorityNodeQ(ht, (a , b) -> a.priority < b.priority, (a, b) -> a.priority == b.priority, "preProc", true);
+        Consumer<Node> resetHeap = (nd) -> {
+        	nd.dist = INFINITY;
+            nd.processed = false;
+            nd.queued = false;
+            nd.parent = null;
+        };
+        
+        Function<Node, Long> getHeapKey = (nd) -> { return nd.dist; };
+        
+        Consumer<Node> resetHeapR = (nd) -> {
+        	nd.distR = INFINITY;
+            nd.processedR = false;
+            nd.queuedR = false;
+            nd.parentR = null;
+        };
+        
+        Function<Node, Long> getHeapRKey = (nd) -> { return nd.distR; };
+        
+        Consumer<Node> resetPreProc = (nd) -> {
+        	
+            nd.active = true;
+            nd.hops = Integer.MAX_VALUE;
+            nd.shortcutDist = INFINITY;
+            nd.queuedP = false;
+            nd.processedP = false;
+            //these properties are persistent during buildPriorityQueue and shortcut(true) for contraction
+//            this.level = 0;
+//            this.priority = 0;
+//            this.neighbors = 0;
+//            this.rank = 0;
+//            this.edgeDiff = 0;
+        };
+        
+        Function<Node, Integer> getPreProcKey = (nd) -> { return nd.priority; };
+        
+        this.heap = new PriorityNodeQ(ht, (a , b) -> a.dist < b.dist, (a, b) -> a.dist == b.dist, resetHeap, getHeapKey, "heap", false);
+        this.heapR = new PriorityNodeQ(ht, (a , b) -> a.distR < b.distR, (a, b) -> a.distR == b.distR, resetHeapR, getHeapRKey, "heapR", false);
+        this.preProc = new PriorityNodeQ(ht, (a , b) -> a.priority < b.priority, (a, b) -> a.priority == b.priority, resetPreProc, getPreProcKey, "preProc", true);
         
         
         
@@ -1123,7 +1162,7 @@ class PriorityNodeQ {
 
 	}
 	
-	private Node getMin() {
+	public Node getMin() {
 		
 		Node nm = heap.get(0);
 		swap(0, heap.size() - 1);
@@ -1242,11 +1281,11 @@ class PriorityNodeQ {
 
 	}
 
-	private Node peek() {
+	public Node peek() {
 		return heap.get(0);
 	}
 	
-	private void printHeap() {
+	public void printHeap() {
 		System.out.println();
 		
 		
