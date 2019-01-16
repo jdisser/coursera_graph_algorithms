@@ -136,7 +136,8 @@ class BiGraph {
 
 	public int n;
 	public long mu = INFINITY;
-	public int processed;
+
+	public int scEdges;
 	
 	public int nRank;
 	public int maxHop;
@@ -205,7 +206,7 @@ class BiGraph {
   
         }
 
-        this.processed = 0;
+        this.scEdges = 0;
   
 	}
 
@@ -442,7 +443,7 @@ class BiGraph {
 	public long dijkstra(int s, int t) {
 		
 		long mu = INFINITY;
-		processed = 0;
+
 		
 		heap.initializeQueue();
 		heap.resetWorkingNodes();
@@ -494,7 +495,7 @@ class BiGraph {
 				}
 				
 				processing.processed = true;
-				++processed;
+
 				
 			} else {							//processing the target node here
 				
@@ -564,7 +565,7 @@ class BiGraph {
 			heap.resetWorkingNodes();	
 			
 			long mu = 0;
-			processed = 0;
+
 			heap.initializeQueue();
 			
 			long uvDist = 0;
@@ -645,7 +646,7 @@ class BiGraph {
 						
 				}
 					
-				++processed;
+
 				x.processed = true;
 
 			}
@@ -661,6 +662,7 @@ class BiGraph {
 						graph.get(u.index).add(sc);
 						Edge scr = new Edge(w, v, u, w.shortcutDist);
 						graphR.get(w.index).add(scr);
+						++scEdges;	//TODO this is never executed!!!!!!
 					}
 					
 				}
@@ -739,6 +741,7 @@ class BiGraph {
 				
 		}
 		System.out.println("Contraction Terminating with empty queue...");
+		System.out.println("Contraction added edges: " + scEdges);
 		preProc.resetWorkingNodes();
 	}
 
