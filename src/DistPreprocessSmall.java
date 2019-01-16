@@ -705,19 +705,21 @@ class BiGraph {
 	
 	public void contractGraph() {
 		int loops = 0;
+		Node min = null;
 		System.out.println("Contracting Graph....");
 		while(!preProc.isEmpty()) {
-			++loops;
-			if(loops > 100)
-				break;
+			
 			Node n = preProc.getMin();
 			System.out.println("Pop: " + n.index + " priority: " + n.priority);
 			shortcut(n, false, maxHop);
 			n.setPriority();
 			System.out.println("Reprioritized: " + n.index + " priority: " + n.priority);
-			Node min = preProc.peek();
-			System.out.println("preProc min: " + min.index + " priority: " + min.priority);
-			if(n != minPriority(n, min)) {
+			if(!preProc.isEmpty()) {
+				min = preProc.peek();
+				System.out.println("preProc min: " + min.index + " priority: " + min.priority);
+			}
+			
+			if(!preProc.isEmpty() && n != minPriority(n, min)) {
 				System.out.println("enQueue: " + n.index + " priority: " + n.priority);
 				preProc.enQueue(n);
 				continue;
@@ -736,6 +738,7 @@ class BiGraph {
 				
 				
 		}
+		System.out.println("Contraction Terminating with empty queue...");
 		preProc.resetWorkingNodes();
 	}
 
@@ -842,10 +845,10 @@ class PriorityNodeQ {
 	
 	public PriorityNodeQ(
 			TableHash hTable,
-			BiPredicate<Node,Node> minNode,
-			BiPredicate<Node,Node> equNode,
-			Consumer<Node> resetNode,
-			Function<Node, ? extends Number> getKey,
+			BiPredicate<Node,Node> minNode,				//(a,b) -> a < b
+			BiPredicate<Node,Node> equNode,				//(a,b) -> a == b
+			Consumer<Node> resetNode,					// a -> { a.field = x; a.field1 = y; ... }
+			Function<Node, ? extends Number> getKey,	// a -> a.key field
 			String name,
 			boolean tieBreak ) {
 		
@@ -897,6 +900,9 @@ class PriorityNodeQ {
 		
 //		System.out.println("minSiftDown 1: " + i);
 //		printHeap();
+		
+		if(heap.size() <= 1)
+			return;
 		
     	int mini = i;
     	int li = heap.size() - 1;	//0 based last index
@@ -1117,8 +1123,8 @@ class DistPreprocessSmall {
     				
     				System.out.println("Building Priority Queue: ");
     				g.buildPriorityQueue();
-//    				System.out.println("Contracting: ");
-//    				g.contractGraph();
+    				System.out.println("Contracting: ");
+    				g.contractGraph();
     				System.out.println("Ready");
     				
     				
