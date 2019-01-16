@@ -188,9 +188,9 @@ class BiGraph {
         
         Function<Node, Integer> getPreProcKey = (nd) -> { return nd.priority; };
         
-        this.heap = new PriorityNodeQ(ht, (a , b) -> a.dist < b.dist, (a, b) -> a.dist == b.dist, resetHeap, getHeapKey, "heap", false);
-        this.heapR = new PriorityNodeQ(ht, (a , b) -> a.distR < b.distR, (a, b) -> a.distR == b.distR, resetHeapR, getHeapRKey, "heapR", false);
-        this.preProc = new PriorityNodeQ(ht, (a , b) -> a.priority < b.priority, (a, b) -> a.priority == b.priority, resetPreProc, getPreProcKey, "preProc", true);
+        this.heap = new PriorityNodeQ(ht, (a , b) ->  {return a.dist < b.dist;}, (a, b) -> {return a.dist == b.dist;}, resetHeap, getHeapKey, "heap", false);
+        this.heapR = new PriorityNodeQ(ht, (a , b) -> {return a.distR < b.distR;}, (a, b) -> {return a.distR == b.distR;}, resetHeapR, getHeapRKey, "heapR", false);
+        this.preProc = new PriorityNodeQ(ht, (a , b) -> {return a.priority < b.priority;}, (a, b) -> {return a.priority == b.priority;}, resetPreProc, getPreProcKey, "preProc", true);
         
         
         
@@ -667,7 +667,7 @@ class BiGraph {
 			}
 		}
 
-		heap.working.add(v);
+		heap.working.add(v);	//TODO: is this right????
 		heap.resetWorkingNodes();							
 		v.shortcuts = shortcuts;
 		v.edgeDiff = shortcuts - ins - outs;				//set the edge difference NOTE: call setPriority on a node to update the priority property
@@ -688,22 +688,24 @@ class BiGraph {
 	
 	public void buildPriorityQueue() {
 		
-		int priority = 0;
+//		int priority = 0;
 		
 		for(int i = 1; i < n; ++i) {
 			System.out.println();
-			System.out.print("Processing Node: " + i);
+			System.out.println("Processing Node: " + i);
 			Node n = map.get(i);
-			priority = shortcut(n, false, maxHop);
-			System.out.println(" Priority: " + priority);
+			shortcut(n, false, maxHop);
 			n.setPriority();
+			System.out.println(" Priority: " + n.priority);
 			preProc.enQueue(n);
 			n.queuedP = true;
+			preProc.printHeap();
 		}
 	}
 	
 	public void contractGraph() {
 		int loops = 0;
+		System.out.println("Contracting Graph....");
 		while(!preProc.isEmpty()) {
 			++loops;
 			if(loops > 100)
@@ -725,9 +727,13 @@ class BiGraph {
 				n.processedP = true;
 				System.out.println("contracted: " + n.index + " priority: " + n.priority);
 			}
+			preProc.printHeap();
 			++loops;
-			if(loops > 100)
+			if(loops > 100) {
+				System.out.println("Terminating with infinite loop...");
 				break;
+			}
+				
 				
 		}
 		preProc.resetWorkingNodes();
@@ -843,6 +849,9 @@ class PriorityNodeQ {
 			String name,
 			boolean tieBreak ) {
 		
+		this.heap = new ArrayList<Node>();
+		this.working = new HashSet<Node>();
+		
 		this.hTable = hTable;
 		this.minNode = minNode;
 		this.equNode = equNode;
@@ -898,7 +907,7 @@ class PriorityNodeQ {
     	int minhi;
     	
     	if(!tieBreak) {
-    		if(left <= li && minNode.test(heap.get(left), heap.get(mini))) {	//use the minNode lambda for the test
+    		if(left <= li && minNode.test(heap.get(left), heap.get(mini))) {	//minTest returns (a,b) -> a < b Parent must be min
         		mini = left;
         	}
         	if(rght <= li && minNode.test(heap.get(rght), heap.get(mini))) {
@@ -949,7 +958,7 @@ class PriorityNodeQ {
 		int hpi;
 		
 		System.out.print(" minSiftUp i: " + i);
-//		printHeap();
+		printHeap();
 		System.out.println();
 		
 		if(i > 0) {
@@ -958,7 +967,8 @@ class PriorityNodeQ {
 			
 			if(!tieBreak) {
 				
-				if(minNode.test(heap.get(pi), heap.get(i))) {
+				if(minNode.test(heap.get(i), heap.get(pi))) {			//minTest returns (a,b) -> a < b Parent must be min
+					System.out.println("swapping: " + pi + "-" + i);
 					swap(pi, i);
 					minSiftUp(pi);
 				}
@@ -969,12 +979,14 @@ class PriorityNodeQ {
 	    		
 	    		//TODO: there is a small probability that the hash will not be unique ~ 4/3000 handle this case here
 	    		
-	    		if(minNode.test(heap.get(pi), heap.get(i))) {
+	    		if(minNode.test(heap.get(i), heap.get(pi))) {
+	    			System.out.println("swapping: " + pi + "-" + i);
 					swap(pi, i);
 					minSiftUp(pi);
 				} else {
 					if(equNode.test(heap.get(pi), heap.get(i))) {
 						if(hpi > hi) {
+							System.out.println("tiebreak swapping: " + pi + "-" + i);
 							swap(pi, i);
 							minSiftUp(pi);
 						}
@@ -995,7 +1007,7 @@ class PriorityNodeQ {
 		System.out.println();
 		
 		
-		System.out.println(name + ": ");
+		System.out.print(name + ": ");
 		for(Node n : heap) {
 			System.out.print(heap.indexOf(n) + "|" + n.index + ":" + getKey.apply(n) + ", ");
 		}
@@ -1042,7 +1054,7 @@ class DistPreprocessSmall {
     	if(args.length != 0) {
 
     		
-    			//TODO: rewrite this section to process the test graphs without the euclidian coordinates
+    			
     			//to run a test file invoke the class with a path parameter ie: java DistPreprocessSmall distTests/02P
     			
     			String p = args[0];
@@ -1105,13 +1117,13 @@ class DistPreprocessSmall {
     				
     				System.out.println("Building Priority Queue: ");
     				g.buildPriorityQueue();
-    				System.out.println("Contracting: ");
-    				g.contractGraph();
+//    				System.out.println("Contracting: ");
+//    				g.contractGraph();
     				System.out.println("Ready");
     				
     				
     				
-    				
+    				//TODO: rewrite this section to run queries and compare results to test files
     				/*
     				s = br.readLine();
     				
