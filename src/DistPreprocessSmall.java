@@ -523,7 +523,7 @@ class BiGraph {
 		
 		//if create, create shortcuts else return the edge difference shortcuts - ins - outs
 		
-		System.out.println("Shortcut contract: " + contract);
+		System.out.println("Shortcut v: " + v.index + " contract: " + contract);
 		
 		int shortcuts = 0;
 		
@@ -556,11 +556,13 @@ class BiGraph {
 					ws.add(e.v);
 		}
 		
-		
+		System.out.println("us: " + us.size() + " ws: " + ws.size());
 		
 		v.active = false;				//remove v from the active graph
 		
 		for(Node u : us) {				//check for a witness path to each target
+			
+			
 			
 			heap.resetWorkingNodes();	
 			
@@ -578,14 +580,22 @@ class BiGraph {
 				}
 			}
 			
+			System.out.println("Processing u: " + u.index + " u-v dist: " + uvDist);
+			
+			
 			long maxShortcut = 0;
+			
+			System.out.println("Target nodes: ");
 			
 			for(Edge e : outEdges) {					//for each target set the maximum shortcut distances d(u,v) + d(v,w) from this source
 				e.v.shortcutDist = uvDist + e.length;
 				maxShortcut = Math.max(maxShortcut, e.v.shortcutDist);
 				e.v.dist = INFINITY;
+				System.out.print(" " + e.v.index + "|" + e.v.shortcutDist );
 			}
 
+			System.out.println();
+			
 			long minRevDist = INFINITY;
 			
 			for(Node w : ws) {								//use the graphR edge list as a blist!!
@@ -599,7 +609,11 @@ class BiGraph {
 				}
 			}
 			
+			System.out.println("max shortcut dist: " + maxShortcut + " min reverse dist: " + minRevDist);
+			
 			long dijkstraStop = maxShortcut - minRevDist;
+			
+			System.out.println("dijkstraStop: " + dijkstraStop);
 
 			heap.enQueue(u);
 			u.queued = true;
@@ -650,14 +664,18 @@ class BiGraph {
 				x.processed = true;
 
 			}
-//			System.out.println("Dijkstra processed edges: " + processed);
+			
 
 			//Count and optionally generate shortcuts
 			for(Node w : ws) {
+				
+				System.out.println("Node: " + w.index + " u-w dist: " + w.dist + " shortcut dist: " + w.shortcutDist);
+				
 				if(w.dist > w.shortcutDist) {
 					//The witness path is longer or non existent
 					++shortcuts;
 					if(contract) {
+						System.out.println("Adding shortcut...");
 						Edge sc = new Edge(u , v , w , w.shortcutDist);
 						graph.get(u.index).add(sc);
 						Edge scr = new Edge(w, v, u, w.shortcutDist);
@@ -673,6 +691,9 @@ class BiGraph {
 		heap.resetWorkingNodes();							
 		v.shortcuts = shortcuts;
 		v.edgeDiff = shortcuts - ins - outs;				//set the edge difference NOTE: call setPriority on a node to update the priority property
+		
+		System.out.println("v Node: " + v.index + " edge diff: " + v.edgeDiff + " v shortcuts: " + v.shortcuts);
+		
 		if(contract) {
 			v.contracted = true;
 			v.rank = ++nRank;
@@ -693,15 +714,15 @@ class BiGraph {
 //		int priority = 0;
 		
 		for(int i = 1; i < n; ++i) {
-			System.out.println();
-			System.out.println("Processing Node: " + i);
+//			System.out.println();
+//			System.out.println("Processing Node: " + i);
 			Node n = map.get(i);
 			shortcut(n, false, maxHop);
 			n.setPriority();
-			System.out.println(" Priority: " + n.priority);
+//			System.out.println(" Priority: " + n.priority);
 			preProc.enQueue(n);
 			n.queuedP = true;
-			preProc.printHeap();
+//			preProc.printHeap();
 		}
 	}
 	
@@ -966,9 +987,9 @@ class PriorityNodeQ {
 		int hi;
 		int hpi;
 		
-		System.out.print(" minSiftUp i: " + i);
-		printHeap();
-		System.out.println();
+//		System.out.print(" minSiftUp i: " + i);
+//		printHeap();
+//		System.out.println();
 		
 		if(i > 0) {
 			pi = (i - 1)/2;
@@ -977,7 +998,7 @@ class PriorityNodeQ {
 			if(!tieBreak) {
 				
 				if(minNode.test(heap.get(i), heap.get(pi))) {			//minTest returns (a,b) -> a < b Parent must be min
-					System.out.println("swapping: " + pi + "-" + i);
+//					System.out.println("swapping: " + pi + "-" + i);
 					swap(pi, i);
 					minSiftUp(pi);
 				}
@@ -989,13 +1010,13 @@ class PriorityNodeQ {
 	    		//TODO: there is a small probability that the hash will not be unique ~ 4/3000 handle this case here
 	    		
 	    		if(minNode.test(heap.get(i), heap.get(pi))) {
-	    			System.out.println("swapping: " + pi + "-" + i);
+//	    			System.out.println("swapping: " + pi + "-" + i);
 					swap(pi, i);
 					minSiftUp(pi);
 				} else {
 					if(equNode.test(heap.get(pi), heap.get(i))) {
 						if(hpi > hi) {
-							System.out.println("tiebreak swapping: " + pi + "-" + i);
+//							System.out.println("tiebreak swapping: " + pi + "-" + i);
 							swap(pi, i);
 							minSiftUp(pi);
 						}
@@ -1014,8 +1035,6 @@ class PriorityNodeQ {
 	
 	public void printHeap() {
 		System.out.println();
-		
-		
 		System.out.print(name + ": ");
 		for(Node n : heap) {
 			System.out.print(heap.indexOf(n) + "|" + n.index + ":" + getKey.apply(n) + ", ");
