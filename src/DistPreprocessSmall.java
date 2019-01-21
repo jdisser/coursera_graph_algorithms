@@ -527,6 +527,8 @@ class BiGraph {
 		
 		int shortcuts = 0;
 		
+		
+		
 		heap.initializeQueue();		
 		
 		ArrayList<Edge> inEdges = graphR.get(v.index);
@@ -577,7 +579,7 @@ class BiGraph {
 			u.hops = 0;
 			
 			for(Edge e : inEdges) {						//get d(u,v) for this source node
-				if(e.u == u) {
+				if(e.v == u) {							//was e.u!!!
 					uvDist = e.length;
 				}
 			}
@@ -611,11 +613,11 @@ class BiGraph {
 				}
 			}
 			
-			System.out.println("max shortcut dist: " + maxShortcut + " min reverse dist: " + minRevDist);
+//			System.out.println("max shortcut dist: " + maxShortcut + " min reverse dist: " + minRevDist);
 			
 			long dijkstraStop = maxShortcut - minRevDist;
 			
-			System.out.println("dijkstraStop: " + dijkstraStop);
+//			System.out.println("dijkstraStop: " + dijkstraStop);
 
 			heap.enQueue(u);
 			u.queued = true;
@@ -676,6 +678,7 @@ class BiGraph {
 				if(w.dist > w.shortcutDist) {
 					//The witness path is longer or non existent
 					++shortcuts;
+					++scEdges;
 					if(contract) {
 						System.out.println("Adding shortcut...");
 						Edge sc = new Edge(u , v , w , w.shortcutDist);
@@ -695,6 +698,7 @@ class BiGraph {
 		v.edgeDiff = shortcuts - ins - outs;				//set the edge difference NOTE: call setPriority on a node to update the priority property
 		
 		System.out.println("v Node: " + v.index + " edge diff: " + v.edgeDiff + " v shortcuts: " + v.shortcuts);
+		System.out.println("Shortcut Edges: " + scEdges);
 		
 		if(contract) {
 			v.contracted = true;
@@ -730,6 +734,7 @@ class BiGraph {
 	
 	public void contractGraph() {
 		int loops = 0;
+		scEdges = 0;
 		Node min = null;
 		System.out.println("Contracting Graph....");
 		while(!preProc.isEmpty()) {
