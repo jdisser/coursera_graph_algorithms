@@ -542,10 +542,10 @@ class BiGraph {
 		
 		for(Edge e : inEdges) {			//get source nodes
 			if(!contract)
-				us.add(e.u);
+				us.add(e.v);			//was e.u ????
 			else
 				if(!e.u.contracted)		//while contracting the graph ignore previously contracted nodes
-					us.add(e.u);
+					us.add(e.v);
 		}
 		
 		for(Edge e : outEdges) {		//get target nodes
@@ -555,6 +555,8 @@ class BiGraph {
 				if(!e.v.contracted)
 					ws.add(e.v);
 		}
+		
+		//TODO: handle case where us | ws = 0 (no shortcuts to calculate)
 		
 		System.out.println("us: " + us.size() + " ws: " + ws.size());
 		
@@ -580,7 +582,7 @@ class BiGraph {
 				}
 			}
 			
-			System.out.println("Processing u: " + u.index + " u-v dist: " + uvDist);
+			System.out.println("Processing u: " + u.index + " u-v dist: " + uvDist); //TODO: why does this result in Processing u: 1 u-v dist: 0 for node 2 in T1???
 			
 			
 			long maxShortcut = 0;
