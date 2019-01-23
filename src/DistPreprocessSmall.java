@@ -241,6 +241,34 @@ class BiGraph {
 
 	}
 	
+	public void printGraph(boolean normal) {
+		
+		//TODO: fix the 0 index
+		
+		if(normal) {
+			for(int i = 0; i < graph.size(); ++i) {
+				System.out.print("Node: " + (i + 1) + " ");
+				System.out.print("[");
+				for(Edge e: graph.get(i)) {
+					System.out.print(e.v.index + ",");
+				}
+				System.out.print("]");
+				System.out.println();
+			}
+		} else {
+			for(int i = 0; i < graphR.size(); ++i) {
+				System.out.print("Node: " + (i + 1) + " ");
+				for(Edge e: graphR.get(i)) {
+					System.out.print("[");
+					System.out.print(e.v.index + ",");
+					System.out.print("]");
+					System.out.println();
+				}
+			}
+		}
+		
+	}
+	
 	//TODO: determine if this should be in the PriorityNodeQ Class
 	public Node minPriority(Node a, Node b) {
 		//returns minimum priority node with hash tiebreaker
@@ -1152,6 +1180,10 @@ class DistPreprocessSmall {
     						System.out.println("Collision: " + i + " Hash: " + x);
     					test.add(x);
     				}
+    				
+    				System.out.println();
+    				g.printGraph(true);
+    				System.out.println();
     				
     				System.out.println("Building Priority Queue: ");
     				g.buildPriorityQueue();
