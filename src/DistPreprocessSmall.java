@@ -543,19 +543,15 @@ class BiGraph {
 
 		
 		for(Edge e : inEdges) {			//get source nodes
-			if(!contract)
+			
 				us.add(e.v);			//was e.u ????
-			else
-				if(!e.u.contracted)		//while contracting the graph ignore previously contracted nodes
-					us.add(e.v);
+			
 		}
 		
 		for(Edge e : outEdges) {		//get target nodes
-			if(!contract)
+			
 				ws.add(e.v);
-			else
-				if(!e.v.contracted)
-					ws.add(e.v);
+			
 		}
 		
 		//TODO: handle case where us | ws = 0 (no shortcuts to calculate)
@@ -677,8 +673,9 @@ class BiGraph {
 				
 				if(w.dist > w.shortcutDist) {
 					//The witness path is longer or non existent
+					//TODO: excess edges are being added !!!!
 					++shortcuts;
-					++scEdges;
+					
 					if(contract) {
 						System.out.println("Adding shortcut...");
 						Edge sc = new Edge(u , v , w , w.shortcutDist);
@@ -736,10 +733,14 @@ class BiGraph {
 		int loops = 0;
 		scEdges = 0;
 		Node min = null;
+		System.out.println();
 		System.out.println("Contracting Graph....");
+		System.out.println();
+		
 		while(!preProc.isEmpty()) {
 			
 			Node n = preProc.getMin();
+			System.out.println();
 			System.out.println("Pop: " + n.index + " priority: " + n.priority);
 			shortcut(n, false, maxHop);
 			n.setPriority();
@@ -748,9 +749,10 @@ class BiGraph {
 				min = preProc.peek();
 				System.out.println("preProc min: " + min.index + " priority: " + min.priority);
 			}
-			
+			System.out.println();
 			if(!preProc.isEmpty() && n != minPriority(n, min)) {
 				System.out.println("enQueue: " + n.index + " priority: " + n.priority);
+				System.out.println();
 				preProc.enQueue(n);
 				continue;
 			} else {
@@ -758,6 +760,7 @@ class BiGraph {
 				n.setPriority();
 				n.processedP = true;
 				System.out.println("contracted: " + n.index + " priority: " + n.priority);
+				System.out.println("-----------------------------------------------------");
 			}
 			preProc.printHeap();
 			++loops;
