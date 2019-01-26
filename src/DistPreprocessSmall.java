@@ -14,7 +14,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.PriorityQueue;
 
-class Node {
+class DpsNode {
 	private static final long INFINITY = Long.MAX_VALUE/4;
 	public int index;				//this is the map index for back reference
 	public long dist;				//this is the distance from the source in the graph
@@ -27,8 +27,8 @@ class Node {
 	public boolean queuedP;			//in preProc
 	public boolean active;			//graph state false => not available in graph
 	public boolean contracted;		//contracted state true => contracted
-	public Node parent;
-	public Node parentR;
+	public DpsNode parent;
+	public DpsNode parentR;
 //	public HashSet<Edge> bList;		//bucket list for single hop backward Edges search during contraction
 	public int level;				//contraction hueristic
 	public int priority;			//priority for contraction
@@ -41,7 +41,7 @@ class Node {
 	
 	
 	
-	public Node(int i) {
+	public DpsNode(int i) {
         this.index = i;
         this.dist = INFINITY;
         this.distR = INFINITY;
@@ -80,17 +80,17 @@ class Node {
 
 
 
-class Edge {
+class DpsEdge {
 	public int target;
 	public int source;
 	public long length;
-	public Node u;
-	public Node v;
-	public Node cn;				//shortcut u--cn-->v
+	public DpsNode u;
+	public DpsNode v;
+	public DpsNode cn;				//shortcut u--cn-->v
 	public boolean shortcut;
 	
 	
-	public Edge(Node u, Node v, int l, boolean shortcut) {
+	public DpsEdge(DpsNode u, DpsNode v, int l, boolean shortcut) {
 		this.target = u.index;
 		this.source = v.index;
 		this.u = u;
@@ -100,7 +100,7 @@ class Edge {
 	}
 	
 	//shortcut constructor u-->v-->w => u --> v(was w) & cn <- v
-	public Edge(Node u, Node v, Node w, long l) {
+	public DpsEdge(DpsNode u, DpsNode v, DpsNode w, long l) {
 		
 		this.u = u;
 		this.v = w;
@@ -109,7 +109,7 @@ class Edge {
 	}
 	
 	//Edge constructor u --> v && l(u,v) = l
-	public Edge(Node u, Node v, long l) {
+	public DpsEdge(DpsNode u, DpsNode v, long l) {
 		this.u = u;
 		this.v = v;
 		this.cn = null;
@@ -124,12 +124,12 @@ class Edge {
 
 class BiGraph {
 	
-	public ArrayList<ArrayList<Edge>> graph;		//adjacency list of edges
-	public ArrayList<ArrayList<Edge>> graphR;		//adjacency list of reversed edges
+	public ArrayList<ArrayList<DpsEdge>> graph;		//adjacency list of edges
+	public ArrayList<ArrayList<DpsEdge>> graphR;		//adjacency list of reversed edges
 	public PriorityNodeQ heap;						//priority queue with method to update key values
 	public PriorityNodeQ heapR;						//priority queue for reversed graph
 	public PriorityNodeQ preProc;					//priority queue for graph preprocessing
-	public HashMap<Integer,Node> map;				//returns Nodes by vertex (index)
+	public HashMap<Integer,DpsNode> map;				//returns Nodes by vertex (index)
 	
 	
 	public final long INFINITY = Long.MAX_VALUE / 4;
@@ -151,10 +151,10 @@ class BiGraph {
 		this.nRank = 0;
 		this.maxHop = 5;			//adjust this for best performance
 
-        this.graph = new ArrayList<ArrayList<Edge>>();
-        this.graphR = new ArrayList<ArrayList<Edge>>();
+        this.graph = new ArrayList<ArrayList<DpsEdge>>();
+        this.graphR = new ArrayList<ArrayList<DpsEdge>>();
         
-        Consumer<Node> resetHeap = (nd) -> {
+        Consumer<DpsNode> resetHeap = (nd) -> {
         	nd.dist = INFINITY;
             nd.processed = false;
             nd.queued = false;
@@ -164,18 +164,18 @@ class BiGraph {
             nd.active = true;					//used to remove the node during the shortcut search
         };
         
-        Function<Node, Long> getHeapKey = (nd) -> { return nd.dist; };
+        Function<DpsNode, Long> getHeapKey = (nd) -> { return nd.dist; };
         
-        Consumer<Node> resetHeapR = (nd) -> {
+        Consumer<DpsNode> resetHeapR = (nd) -> {
         	nd.distR = INFINITY;
             nd.processedR = false;
             nd.queuedR = false;
             nd.parentR = null;
         };
         
-        Function<Node, Long> getHeapRKey = (nd) -> { return nd.distR; };
+        Function<DpsNode, Long> getHeapRKey = (nd) -> { return nd.distR; };
         
-        Consumer<Node> resetPreProc = (nd) -> {
+        Consumer<DpsNode> resetPreProc = (nd) -> {
 
             nd.queuedP = false;
             nd.processedP = false;
@@ -187,7 +187,7 @@ class BiGraph {
 //            this.edgeDiff = 0;
         };
         
-        Function<Node, Integer> getPreProcKey = (nd) -> { return nd.priority; };
+        Function<DpsNode, Integer> getPreProcKey = (nd) -> { return nd.priority; };
         
         this.heap = new PriorityNodeQ(ht, (a , b) ->  {return a.dist < b.dist;}, (a, b) -> {return a.dist == b.dist;}, resetHeap, getHeapKey, "heap", false);
         this.heapR = new PriorityNodeQ(ht, (a , b) -> {return a.distR < b.distR;}, (a, b) -> {return a.distR == b.distR;}, resetHeapR, getHeapRKey, "heapR", false);
@@ -195,14 +195,14 @@ class BiGraph {
         
         
         
-        this.map = new HashMap<Integer,Node>(n+1);
+        this.map = new HashMap<Integer,DpsNode>(n+1);
         
         
         
         for (int i = 0; i <= n; i++) {					//graph indexes and nodes are 1 indexed, index 0 not used
         	
-            this.graph.add(new ArrayList<Edge>());
-            this.graphR.add(new ArrayList<Edge>());          
+            this.graph.add(new ArrayList<DpsEdge>());
+            this.graphR.add(new ArrayList<DpsEdge>());          
   
         }
 
@@ -210,8 +210,8 @@ class BiGraph {
   
 	}
 
-	public Node addNode(int i) {
-		Node n = new Node(i);
+	public DpsNode addNode(int i) {
+		DpsNode n = new DpsNode(i);
 		map.put(i, n);
 		return n;
 	}
@@ -229,12 +229,12 @@ class BiGraph {
 	public void addEdges(int s, int t, int c) {		//(source, target, length in 1 based indexing)
 
 		
-		Node source = map.get(s);
-		Node target = map.get(t);
+		DpsNode source = map.get(s);
+		DpsNode target = map.get(t);
 		
 		
-		Edge e = new Edge(source, target, c);
-        Edge er = new Edge(target, source, c);
+		DpsEdge e = new DpsEdge(source, target, c);
+        DpsEdge er = new DpsEdge(target, source, c);
 
         graph.get(s).add(e);
 		graphR.get(t).add(er);
@@ -249,7 +249,7 @@ class BiGraph {
 			for(int i = 0; i < graph.size(); ++i) {
 				System.out.print("Node: " + (i + 1) + " ");
 				System.out.print("[");
-				for(Edge e: graph.get(i)) {
+				for(DpsEdge e: graph.get(i)) {
 					System.out.print(e.v.index + ",");
 				}
 				System.out.print("]");
@@ -258,7 +258,7 @@ class BiGraph {
 		} else {
 			for(int i = 0; i < graphR.size(); ++i) {
 				System.out.print("Node: " + (i + 1) + " ");
-				for(Edge e: graphR.get(i)) {
+				for(DpsEdge e: graphR.get(i)) {
 					System.out.print("[");
 					System.out.print(e.v.index + ",");
 					System.out.print("]");
@@ -270,10 +270,10 @@ class BiGraph {
 	}
 	
 	//TODO: determine if this should be in the PriorityNodeQ Class
-	public Node minPriority(Node a, Node b) {
+	public DpsNode minPriority(DpsNode a, DpsNode b) {
 		//returns minimum priority node with hash tiebreaker
 		
-		Node min = null;
+		DpsNode min = null;
 		
 		if(a == null || b==null)
 			return min;
@@ -477,8 +477,8 @@ class BiGraph {
 		heap.resetWorkingNodes();
 
 		
-		Node sn = map.get(s);
-		Node tn = map.get(t);
+		DpsNode sn = map.get(s);
+		DpsNode tn = map.get(t);
 		
 		sn.dist = 0;
 								
@@ -495,14 +495,14 @@ class BiGraph {
 	
 		while(!heap.isEmpty()) {						//process the next node in the forward graph
 			
-			Node processing = heap.getMin();
+			DpsNode processing = heap.getMin();
 			processing.queued = false;
 			
 //				System.out.println("processing Node: " + processing.index);
 			if(processing != tn) {
-				for(Edge e : graph.get(processing.index)) {
+				for(DpsEdge e : graph.get(processing.index)) {
 					
-					Node tt = e.v;	
+					DpsNode tt = e.v;	
 					
 					long td = processing.dist + e.length;
 				
@@ -547,7 +547,7 @@ class BiGraph {
 
 	}
 	
-	public int shortcut(Node v, boolean contract, int hops) {
+	public int shortcut(DpsNode v, boolean contract, int hops) {
 		
 		//if create, create shortcuts else return the edge difference shortcuts - ins - outs
 		
@@ -555,28 +555,29 @@ class BiGraph {
 		
 		int shortcuts = 0;
 		
-		
+		//TODO: in a contracting search only nodes not yet contracted are used!!
+		// only nodes that generated shortcuts are removed to preserve shortest paths
 		
 		heap.initializeQueue();		
 		
-		ArrayList<Edge> inEdges = graphR.get(v.index);
-		ArrayList<Edge> outEdges = graph.get(v.index);
+		ArrayList<DpsEdge> inEdges = graphR.get(v.index);
+		ArrayList<DpsEdge> outEdges = graph.get(v.index);
 		
 		int ins = inEdges.size();
 		int outs = outEdges.size();
 		
 		
-		ArrayList<Node> us = new ArrayList<Node>();
-		ArrayList<Node> ws = new ArrayList<Node>();
+		ArrayList<DpsNode> us = new ArrayList<DpsNode>();
+		ArrayList<DpsNode> ws = new ArrayList<DpsNode>();
 
 		
-		for(Edge e : inEdges) {			//get source nodes
+		for(DpsEdge e : inEdges) {			//get source nodes
 			
 				us.add(e.v);			//was e.u ????
 			
 		}
 		
-		for(Edge e : outEdges) {		//get target nodes
+		for(DpsEdge e : outEdges) {		//get target nodes
 			
 				ws.add(e.v);
 			
@@ -588,7 +589,7 @@ class BiGraph {
 		
 		v.active = false;				//remove v from the active graph
 		
-		for(Node u : us) {				//check for a witness path to each target
+		for(DpsNode u : us) {				//check for a witness path to each target
 			
 			
 			
@@ -602,7 +603,7 @@ class BiGraph {
 			u.dist = 0;
 			u.hops = 0;
 			
-			for(Edge e : inEdges) {						//get d(u,v) for this source node
+			for(DpsEdge e : inEdges) {						//get d(u,v) for this source node
 				if(e.v == u) {							//was e.u!!!
 					uvDist = e.length;
 				}
@@ -615,7 +616,7 @@ class BiGraph {
 			
 			System.out.println("Target nodes: ");
 			
-			for(Edge e : outEdges) {					//for each target set the maximum shortcut distances d(u,v) + d(v,w) from this source
+			for(DpsEdge e : outEdges) {					//for each target set the maximum shortcut distances d(u,v) + d(v,w) from this source
 				e.v.shortcutDist = uvDist + e.length;
 				maxShortcut = Math.max(maxShortcut, e.v.shortcutDist);
 				e.v.dist = INFINITY;
@@ -626,8 +627,8 @@ class BiGraph {
 			
 			long minRevDist = INFINITY;
 			
-			for(Node w : ws) {								//use the graphR edge list as a blist!!
-				for(Edge e : graphR.get(w.index)) {
+			for(DpsNode w : ws) {								//use the graphR edge list as a blist!!
+				for(DpsEdge e : graphR.get(w.index)) {
 					minRevDist = Math.min(minRevDist, e.length);
 					if(e.v == u) {
 						w.dist = e.length;
@@ -648,7 +649,7 @@ class BiGraph {
 			
 			while(!heap.isEmpty()) {						//process the next node in the forward graph
 				
-				Node x = heap.getMin();
+				DpsNode x = heap.getMin();
 				x.queued = false;
 				mu = Math.max(mu, x.dist);
 				if(mu >= dijkstraStop || x.hops > hops)		//stopping conditions are max d(u,w) > max (d(u,v)+d(v,w)) - min(x,w) || hops > hops parameter 
@@ -656,9 +657,9 @@ class BiGraph {
 				
 //					System.out.println("processing Node: " + processing.index);
 
-				for(Edge e : graph.get(x.index)) {
+				for(DpsEdge e : graph.get(x.index)) {
 					
-					Node tt = e.v;	
+					DpsNode tt = e.v;	
 					
 					if(tt.active) {										//ignore contracted nodes
 						long td = x.dist + e.length;
@@ -695,7 +696,7 @@ class BiGraph {
 			
 
 			//Count and optionally generate shortcuts
-			for(Node w : ws) {
+			for(DpsNode w : ws) {
 				
 				System.out.println("Node: " + w.index + " u-w dist: " + w.dist + " shortcut dist: " + w.shortcutDist);
 				
@@ -706,9 +707,9 @@ class BiGraph {
 					
 					if(contract) {
 						System.out.println("Adding shortcut...");
-						Edge sc = new Edge(u , v , w , w.shortcutDist);
+						DpsEdge sc = new DpsEdge(u , v , w , w.shortcutDist);
 						graph.get(u.index).add(sc);
-						Edge scr = new Edge(w, v, u, w.shortcutDist);
+						DpsEdge scr = new DpsEdge(w, v, u, w.shortcutDist);
 						graphR.get(w.index).add(scr);
 						++scEdges;	//TODO this is never executed!!!!!!
 					}
@@ -728,10 +729,10 @@ class BiGraph {
 		if(contract) {
 			v.contracted = true;
 			v.rank = ++nRank;
-			for(Node w : ws) {								//increase contracted neighbors
+			for(DpsNode w : ws) {								//increase contracted neighbors
 				++w.neighbors;
 			}
-			for(Node u : us) {
+			for(DpsNode u : us) {
 				++u.neighbors;
 				u.level = Math.max(u.level, v.level + 1); 	//update level of neighbors
 			}
@@ -747,7 +748,7 @@ class BiGraph {
 		for(int i = 1; i < n; ++i) {
 //			System.out.println();
 //			System.out.println("Processing Node: " + i);
-			Node n = map.get(i);
+			DpsNode n = map.get(i);
 			shortcut(n, false, maxHop);
 			n.setPriority();
 //			System.out.println(" Priority: " + n.priority);
@@ -760,14 +761,14 @@ class BiGraph {
 	public void contractGraph() {
 		int loops = 0;
 		scEdges = 0;
-		Node min = null;
+		DpsNode min = null;
 		System.out.println();
 		System.out.println("Contracting Graph....");
 		System.out.println();
 		
 		while(!preProc.isEmpty()) {
 			
-			Node n = preProc.getMin();
+			DpsNode n = preProc.getMin();
 			System.out.println();
 			System.out.println("Pop: " + n.index + " priority: " + n.priority);
 			shortcut(n, false, maxHop);
@@ -890,32 +891,32 @@ class PriorityNodeQ {
 	 */
 	
 	
-	private ArrayList<Node> heap;
+	private ArrayList<DpsNode> heap;
 	private TableHash hTable;
-	public HashSet<Node> working;					//all nodes processed in this queue that must be reset
+	public HashSet<DpsNode> working;					//all nodes processed in this queue that must be reset
 	private String name;
 	
 	//these are passed in as a Lambda functions to allow for different Node properties as keys
-	private BiPredicate<Node, Node> minNode;		//test(a,b) -> true if a < b	
-	private BiPredicate<Node, Node> equNode;		//test(a,b) -> true if a = b
+	private BiPredicate<DpsNode, DpsNode> minNode;		//test(a,b) -> true if a < b	
+	private BiPredicate<DpsNode, DpsNode> equNode;		//test(a,b) -> true if a = b
 
 	
-	private Consumer<Node> resetNode;				//resets the properties of nodes used in this queue
-	private Function<Node, ? extends Number> getKey;
+	private Consumer<DpsNode> resetNode;				//resets the properties of nodes used in this queue
+	private Function<DpsNode, ? extends Number> getKey;
 	
 	private boolean tieBreak;						//if tieBreak = true use the hash of the node index as a tiebreaker in sifts
 	
 	public PriorityNodeQ(
 			TableHash hTable,
-			BiPredicate<Node,Node> minNode,				//(a,b) -> a < b
-			BiPredicate<Node,Node> equNode,				//(a,b) -> a == b
-			Consumer<Node> resetNode,					// a -> { a.field = x; a.field1 = y; ... }
-			Function<Node, ? extends Number> getKey,	// a -> a.key field
+			BiPredicate<DpsNode,DpsNode> minNode,				//(a,b) -> a < b
+			BiPredicate<DpsNode,DpsNode> equNode,				//(a,b) -> a == b
+			Consumer<DpsNode> resetNode,					// a -> { a.field = x; a.field1 = y; ... }
+			Function<DpsNode, ? extends Number> getKey,	// a -> a.key field
 			String name,
 			boolean tieBreak ) {
 		
-		this.heap = new ArrayList<Node>();
-		this.working = new HashSet<Node>();
+		this.heap = new ArrayList<DpsNode>();
+		this.working = new HashSet<DpsNode>();
 		
 		this.hTable = hTable;
 		this.minNode = minNode;
@@ -926,14 +927,14 @@ class PriorityNodeQ {
 		this.tieBreak = tieBreak;
 	}
 	
-	public void decreaseKey(Node dn) {
+	public void decreaseKey(DpsNode dn) {
 	
 		//this method assumes the property used as a key of the Node has been altered prior to the method call
 		int dni = heap.indexOf(dn);
 		minSiftUp(dni);
 	}
 	
-	public void enQueue(Node n) {
+	public void enQueue(DpsNode n) {
 		
 		working.add(n);				
 		int end = heap.size();
@@ -942,9 +943,9 @@ class PriorityNodeQ {
 
 	}
 	
-	public Node getMin() {
+	public DpsNode getMin() {
 		
-		Node nm = heap.get(0);
+		DpsNode nm = heap.get(0);
 		swap(0, heap.size() - 1);
 		heap.remove(heap.size() - 1);
 		minSiftDown(0);
@@ -1067,14 +1068,14 @@ class PriorityNodeQ {
 
 	}
 
-	public Node peek() {
+	public DpsNode peek() {
 		return heap.get(0);
 	}
 	
 	public void printHeap() {
 		System.out.println();
 		System.out.print(name + ": ");
-		for(Node n : heap) {
+		for(DpsNode n : heap) {
 			System.out.print(heap.indexOf(n) + "|" + n.index + ":" + getKey.apply(n) + ", ");
 		}
 		System.out.println();
@@ -1083,7 +1084,7 @@ class PriorityNodeQ {
 	
 	private void swap(int i, int n) {
     	
-    	Node tn = heap.get(i);
+    	DpsNode tn = heap.get(i);
     	heap.set(i, heap.get(n));
     	heap.set(n, tn);
     	
@@ -1092,7 +1093,7 @@ class PriorityNodeQ {
 	public void resetWorkingNodes() {
 		
 		if(!working.isEmpty()) {
-			for(Node n: working) {
+			for(DpsNode n: working) {
 				resetNode.accept(n);;
 			}
 			working.clear();
