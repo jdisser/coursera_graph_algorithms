@@ -595,8 +595,7 @@ class BiGraph {
 			
 			long mu = 0;
 			long uvDist = 0;
-			u.dist = 0;
-			u.hops = 0;
+			
 			
 			for(DpsEdge e : inEdges) {		//get d(u,v) for this source node
 				if(e.v == u) {				
@@ -619,24 +618,13 @@ class BiGraph {
 
 			System.out.println();
 			
-			long minRevDist = 0;
-			/*
-			 * This one hop back code could shorten the preprocess time but would throw off the cost of contraction
-			 * 
-			for(DpsNode w : ws) {								
-				for(DpsEdge e : graphR.get(w.index)) {
-					minRevDist = Math.min(minRevDist, e.length);
-					if(e.v == u) {
-						w.dist = e.length;
-						w.parent = u;
-						w.hops = 1;
-					}
-				}
-			}
-			*/
+			u.dist = 0;
+			u.hops = 0;
 
 			//TODO: why does the u-w distance for ALL node = INFINITY???? Stopping to soon???
-			long dijkstraStop = maxShortcut - minRevDist;
+			long dijkstraStop = maxShortcut;
+			
+			System.out.println("Dijkstra Stopping Distance: " + dijkstraStop);
 
 			heap.enQueue(u);
 			u.queued = true;
@@ -646,8 +634,14 @@ class BiGraph {
 				DpsNode x = heap.getMin();
 				x.queued = false;
 				mu = Math.max(mu, x.dist);
-				if(mu >= dijkstraStop || x.hops > hops)		//stopping conditions are max d(u,w) > max (d(u,v)+d(v,w)){if used: - min(x,w)} || hops > hops parameter 
+				//TODO: why is dist here INFINITY????
+				System.out.println("popped node: " + x.index + " dist: " + x.dist + " mu: " + mu);
+				
+				if(mu >= dijkstraStop || x.hops > hops) {	//stopping conditions are max d(u,w) > max (d(u,v)+d(v,w)){if used: - min(x,w)} || hops > hops parameter
+					System.out.println("Stopping Dijkstra mu: " + mu + " hops: " + x.hops);
 					break;
+				}
+					
 
 				for(DpsEdge e : graph.get(x.index)) {
 					
@@ -1192,8 +1186,8 @@ class DistPreprocessSmall {
     				
     				System.out.println("Building Priority Queue: ");
     				g.buildPriorityQueue();
-    				System.out.println("Contracting: ");
-    				g.contractGraph();
+//    				System.out.println("Contracting: ");
+//    				g.contractGraph();
     				System.out.println("Ready");
     				
     				
