@@ -249,6 +249,21 @@ class BiGraph {
 		
 	}
 	
+	public void printOverlayGraph() {
+
+		for(int i = 1; i < graph.size(); ++i) {
+			System.out.print("Node: " + (i) + "|" + map.get(i).rank);
+			System.out.print(" [");
+			for(DpsEdge e: graph.get(i)) {
+				if(e.shortcut)
+					System.out.print(e.v.index + ",");
+			}
+			System.out.print("]");
+			System.out.println();
+		}
+
+	}
+	
 	
 	public DpsNode minPriority(DpsNode a, DpsNode b) {
 		//returns minimum priority node with hash tiebreaker
@@ -1180,6 +1195,7 @@ class DistPreprocessSmall {
     				g.buildPriorityQueue();
     				System.out.println("Contracting: =========================================================");
     				g.contractGraph();
+    				g.printOverlayGraph();
     				System.out.println("Ready");
     				
     				
