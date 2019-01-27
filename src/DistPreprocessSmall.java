@@ -621,7 +621,7 @@ class BiGraph {
 			u.dist = 0;
 			u.hops = 0;
 
-			//TODO: why does the u-w distance for ALL node = INFINITY???? Stopping to soon???
+			
 			long dijkstraStop = maxShortcut;
 			
 			System.out.println("Dijkstra Stopping Distance: " + dijkstraStop);
@@ -634,7 +634,7 @@ class BiGraph {
 				DpsNode x = heap.getMin();
 				x.queued = false;
 				mu = Math.max(mu, x.dist);
-				//TODO: why is dist here INFINITY????
+				
 				System.out.println("popped node: " + x.index + " dist: " + x.dist + " mu: " + mu);
 				
 				if(mu >= dijkstraStop || x.hops > hops) {	//stopping conditions are max d(u,w) > max (d(u,v)+d(v,w)){if used: - min(x,w)} || hops > hops parameter
@@ -1186,8 +1186,8 @@ class DistPreprocessSmall {
     				
     				System.out.println("Building Priority Queue: ");
     				g.buildPriorityQueue();
-//    				System.out.println("Contracting: ");
-//    				g.contractGraph();
+    				System.out.println("Contracting: =========================================================");
+    				g.contractGraph();
     				System.out.println("Ready");
     				
     				
