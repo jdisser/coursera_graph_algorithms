@@ -1,4 +1,5 @@
 import java.util.Scanner;
+import java.util.Set;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -12,7 +13,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.PriorityQueue;
+import java.util.Queue;
 
 class DpsNode {
 	private static final long INFINITY = Long.MAX_VALUE/4;
@@ -29,7 +32,6 @@ class DpsNode {
 	public boolean contracted;		//contracted state true => contracted
 	public DpsNode parent;
 	public DpsNode parentR;
-//	public HashSet<Edge> bList;		//bucket list for single hop backward Edges search during contraction
 	public int level;				//contraction hueristic
 	public int priority;			//priority for contraction
 	public int neighbors;			//number of contracted neighbors
@@ -38,6 +40,7 @@ class DpsNode {
 	public int hops;				//number of edges from source used to terminate contraction
 	public long shortcutDist;		//the minimum distance u->v->w for a shortcut to be created
 	public int shortcuts;
+	public int cover;				//number of nodes targeted by shortcuts
 	
 	
 	
@@ -54,7 +57,6 @@ class DpsNode {
         this.contracted = false;
         this.parent = null;
         this.parentR  = null;
-//        this.bList = new HashSet<Edge>();
         this.active = true;
         this.level = 0;
         this.priority = 0;
@@ -64,16 +66,11 @@ class DpsNode {
         this.hops = Integer.MAX_VALUE;
         this.shortcutDist = INFINITY;
         this.shortcuts = 0;
+        this.cover = 0;
 	}
-	
-	
-	public static int nodeNumber(int i, int j, int w) {	//1 index position of node in test graph w x h
-		return w*(j - 1) + i;
-	}
-	
 
 	public void setPriority() {
-		this.priority = this.edgeDiff + this.neighbors + this.shortcuts + this.level;
+		this.priority = this.edgeDiff + this.neighbors + this.level + this.cover;
 	}
 	
 }
@@ -555,8 +552,10 @@ class BiGraph {
 		
 		int shortcuts = 0;
 		
-		//TODO: in a contracting search only nodes not yet contracted are used!!
-		// only nodes that generated shortcuts are removed to preserve shortest paths
+		Set<DpsNode> cover = new HashSet<DpsNode>();
+		
+		//a necessary priority term is the number of processed nodes during the initial search (cost of contraction)
+		
 		
 		heap.initializeQueue();		
 		
@@ -567,50 +566,54 @@ class BiGraph {
 		int outs = outEdges.size();
 		
 		
-		ArrayList<DpsNode> us = new ArrayList<DpsNode>();
-		ArrayList<DpsNode> ws = new ArrayList<DpsNode>();
+		ArrayList<DpsNode> us = new ArrayList<DpsNode>();		//source nodes
+		ArrayList<DpsNode> ws = new ArrayList<DpsNode>();		//target nodes
+		
+		Queue<DpsEdge> sCuts = new LinkedList<DpsEdge>();		//buffer for forward shortcuts to be added
+		Queue<DpsEdge> sCutsR = new LinkedList<DpsEdge>();		//buffer for reverse shortcuts to be added
 
 		
-		for(DpsEdge e : inEdges) {			//get source nodes
-			
-				us.add(e.v);			//was e.u ????
+		for(DpsEdge e : inEdges) {			//get source nodes ignore contracted nodes
+			if(!contract)
+				us.add(e.v);
+			else {
+				if(!e.v.contracted)
+					us.add(e.v);
+			}
 			
 		}
 		
 		for(DpsEdge e : outEdges) {		//get target nodes
-			
+			if(!contract)
 				ws.add(e.v);
+			else {
+				if(!e.v.contracted)
+					ws.add(e.v);
+			}
 			
-		}
-		
-		//TODO: handle case where us | ws = 0 (no shortcuts to calculate)
+		}	
 		
 		System.out.println("us: " + us.size() + " ws: " + ws.size());
 		
 		v.active = false;				//remove v from the active graph
 		
 		for(DpsNode u : us) {				//check for a witness path to each target
-			
-			
-			
+				
 			heap.resetWorkingNodes();	
-			
-			long mu = 0;
-
 			heap.initializeQueue();
 			
+			long mu = 0;
 			long uvDist = 0;
 			u.dist = 0;
 			u.hops = 0;
 			
-			for(DpsEdge e : inEdges) {						//get d(u,v) for this source node
-				if(e.v == u) {							//was e.u!!!
+			for(DpsEdge e : inEdges) {		//get d(u,v) for this source node
+				if(e.v == u) {				
 					uvDist = e.length;
 				}
 			}
 			
-			System.out.println("Processing u: " + u.index + " u-v dist: " + uvDist); //TODO: why does this result in Processing u: 1 u-v dist: 0 for node 2 in T1???
-			
+			System.out.println("Processing u: " + u.index + " u-v dist: " + uvDist); 
 			
 			long maxShortcut = 0;
 			
@@ -625,9 +628,11 @@ class BiGraph {
 
 			System.out.println();
 			
-			long minRevDist = INFINITY;
-			
-			for(DpsNode w : ws) {								//use the graphR edge list as a blist!!
+			long minRevDist = 0;
+			/*
+			 * This one hop back code could shorten the preprocess time but would throw off the cost of contraction
+			 * 
+			for(DpsNode w : ws) {								
 				for(DpsEdge e : graphR.get(w.index)) {
 					minRevDist = Math.min(minRevDist, e.length);
 					if(e.v == u) {
@@ -637,12 +642,10 @@ class BiGraph {
 					}
 				}
 			}
-			
-//			System.out.println("max shortcut dist: " + maxShortcut + " min reverse dist: " + minRevDist);
+			*/
+
 			
 			long dijkstraStop = maxShortcut - minRevDist;
-			
-//			System.out.println("dijkstraStop: " + dijkstraStop);
 
 			heap.enQueue(u);
 			u.queued = true;
@@ -652,43 +655,37 @@ class BiGraph {
 				DpsNode x = heap.getMin();
 				x.queued = false;
 				mu = Math.max(mu, x.dist);
-				if(mu >= dijkstraStop || x.hops > hops)		//stopping conditions are max d(u,w) > max (d(u,v)+d(v,w)) - min(x,w) || hops > hops parameter 
+				if(mu >= dijkstraStop || x.hops > hops)		//stopping conditions are max d(u,w) > max (d(u,v)+d(v,w)){if used: - min(x,w)} || hops > hops parameter 
 					break;
-				
-//					System.out.println("processing Node: " + processing.index);
 
 				for(DpsEdge e : graph.get(x.index)) {
 					
 					DpsNode tt = e.v;	
 					
-					if(tt.active) {										//ignore contracted nodes
+					if(tt.active) {							//ignore v node in witness search
 						long td = x.dist + e.length;
 						
 						if(tt.dist > td) {
-								if(ws.contains(tt)) {
-									//tt is a target node and is never queued
-									heap.working.add(tt);
-									tt.dist = td;
-									tt.parent = x;
+							if(ws.contains(tt)) {
+								heap.working.add(tt);		//tt is a target node and is never enqueued
+								tt.dist = td;
+								tt.parent = x;
+								tt.hops = x.hops + 1;
+							} else {
+								if(tt.queued == false) {
 									tt.hops = x.hops + 1;
+									tt.dist = td;
+									heap.enQueue(tt);
+									tt.queued = true;
 								} else {
-									if(tt.queued == false) {
-										tt.hops = x.hops + 1;
-										tt.dist = td;
-										heap.enQueue(tt);
-										tt.queued = true;
-									} else {
-										tt.dist = td;
-										heap.decreaseKey(tt);		
-										tt.hops = x.hops + 1;
-									}
+									tt.dist = td;
+									heap.decreaseKey(tt);		
+									tt.hops = x.hops + 1;
 								}
-//									tt.pindex = processing.index;				//min path is my daddy
+							}
 						}
 					}
-						
 				}
-					
 
 				x.processed = true;
 
@@ -701,43 +698,59 @@ class BiGraph {
 				System.out.println("Node: " + w.index + " u-w dist: " + w.dist + " shortcut dist: " + w.shortcutDist);
 				
 				if(w.dist > w.shortcutDist) {
-					//The witness path is longer or non existent
-					//TODO: excess edges are being added !!!!
-					++shortcuts;
+
+					++shortcuts;			//number of shortcuts created for this node's contraction
+					cover.add(w);
+					
 					
 					if(contract) {
 						System.out.println("Adding shortcut...");
 						DpsEdge sc = new DpsEdge(u , v , w , w.shortcutDist);
-						graph.get(u.index).add(sc);
+						sCuts.add(sc);											//don't include the shortcuts in the witness searches!!!
 						DpsEdge scr = new DpsEdge(w, v, u, w.shortcutDist);
-						graphR.get(w.index).add(scr);
-						++scEdges;	//TODO this is never executed!!!!!!
+						sCutsR.add(scr);
+						++scEdges;												//total shortcuts in graph
 					}
 					
 				}
 			}
 		}
 
-		heap.working.add(v);	//TODO: is this right????
-		heap.resetWorkingNodes();							
-		v.shortcuts = shortcuts;
-		v.edgeDiff = shortcuts - ins - outs;				//set the edge difference NOTE: call setPriority on a node to update the priority property
+		heap.working.add(v);								//size of working is contractionCost if needed to reduce preprocessing time	
+		heap.resetWorkingNodes();
 		
-		System.out.println("v Node: " + v.index + " edge diff: " + v.edgeDiff + " v shortcuts: " + v.shortcuts);
+		v.shortcuts = shortcuts;							
+		v.edgeDiff = shortcuts - ins - outs;				//set the edge difference NOTE: call setPriority on a node to update the priority property
+		v.cover = cover.size();
+		
+		
+		System.out.println("v Node: " + v.index + " edge diff: " + v.edgeDiff + " cover: "+ v.cover + " v shortcuts: " + v.shortcuts);
 		System.out.println("Shortcut Edges: " + scEdges);
 		
 		if(contract) {
 			v.contracted = true;
 			v.rank = ++nRank;
-			for(DpsNode w : ws) {								//increase contracted neighbors
-				++w.neighbors;
+			for(DpsNode w : ws) {									//increase contracted neighbors if shortcuts created
+				if(shortcuts != 0)
+					++w.neighbors;
+				if(cover.contains(w))
+					w.level = Math.max(w.level, v.level + 1); 		//update level of shortcut neighbors
 			}
 			for(DpsNode u : us) {
-				++u.neighbors;
-				u.level = Math.max(u.level, v.level + 1); 	//update level of neighbors
+				if(shortcuts != 0)
+					++u.neighbors;
+			}
+			while(!sCuts.isEmpty()) {							//add the shortcuts to the graph
+				DpsEdge e = sCuts.remove();
+				graph.get(e.u.index).add(e);
+			}
+			while(!sCutsR.isEmpty()) {
+				DpsEdge e = sCutsR.remove();
+				graphR.get(e.u.index).add(e);
 			}
 		}
 		
+		cover.clear();
 		return v.edgeDiff;									//return the edge difference
 	}
 	
