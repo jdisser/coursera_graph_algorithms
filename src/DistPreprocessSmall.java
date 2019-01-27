@@ -213,15 +213,7 @@ class BiGraph {
 		return n;
 	}
 	
-	/*
-	public void initializeQueues() {
-		
-		heap.initializeQueue();
-		heapR.initializeQueue();
-		preProc.initializeQueue();
-		
-	}
-	*/
+	
 	
 	public void addEdges(int s, int t, int c) {		//(source, target, length in 1 based indexing)
 
@@ -240,11 +232,10 @@ class BiGraph {
 	
 	public void printGraph(boolean normal) {
 		
-		//TODO: fix the 0 index
 		
 		if(normal) {
-			for(int i = 0; i < graph.size(); ++i) {
-				System.out.print("Node: " + (i + 1) + " ");
+			for(int i = 1; i < graph.size(); ++i) {
+				System.out.print("Node: " + (i) + " ");
 				System.out.print("[");
 				for(DpsEdge e: graph.get(i)) {
 					System.out.print(e.v.index + ",");
@@ -253,7 +244,7 @@ class BiGraph {
 				System.out.println();
 			}
 		} else {
-			for(int i = 0; i < graphR.size(); ++i) {
+			for(int i = 1; i < graphR.size(); ++i) {
 				System.out.print("Node: " + (i + 1) + " ");
 				for(DpsEdge e: graphR.get(i)) {
 					System.out.print("[");
@@ -266,7 +257,7 @@ class BiGraph {
 		
 	}
 	
-	//TODO: determine if this should be in the PriorityNodeQ Class
+	
 	public DpsNode minPriority(DpsNode a, DpsNode b) {
 		//returns minimum priority node with hash tiebreaker
 		
@@ -644,7 +635,7 @@ class BiGraph {
 			}
 			*/
 
-			
+			//TODO: why does the u-w distance for ALL node = INFINITY???? Stopping to soon???
 			long dijkstraStop = maxShortcut - minRevDist;
 
 			heap.enQueue(u);
@@ -1149,12 +1140,12 @@ class DistPreprocessSmall {
     			try(BufferedReader br = Files.newBufferedReader(fp, cset)){
     				s = br.readLine();
     				String[] params = s.split(" ");
-    				int n = Integer.valueOf(params[0]);
-    				int m = Integer.valueOf(params[1]);
+    				int n = Integer.valueOf(params[0]);			//n=number of nodes
+    				int m = Integer.valueOf(params[1]);			//m=number of edges
     				
     				
     				
-    				BiGraph g = new BiGraph(n + 1, tHash);
+    				BiGraph g = new BiGraph(n, tHash);			//was n+1
     				
     				System.out.println("Running file: " + fp.toString());
     				System.out.println("Nodes: " + n + " Edges: " + m);
