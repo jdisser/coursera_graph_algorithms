@@ -78,23 +78,13 @@ class DpsNode {
 
 
 class DpsEdge {
-	public int target;
-	public int source;
+
 	public long length;
 	public DpsNode u;
 	public DpsNode v;
-	public DpsNode cn;				//shortcut u--cn-->v
+	public DpsNode cn;				//shortcut u--cn-->v cn is the contracted node
 	public boolean shortcut;
 	
-	
-	public DpsEdge(DpsNode u, DpsNode v, int l, boolean shortcut) {
-		this.target = u.index;
-		this.source = v.index;
-		this.u = u;
-		this.v = v;
-		this.length = l;
-		this.shortcut = shortcut;
-	}
 	
 	//shortcut constructor u-->v-->w => u --> v(was w) & cn <- v
 	public DpsEdge(DpsNode u, DpsNode v, DpsNode w, long l) {
@@ -103,6 +93,7 @@ class DpsEdge {
 		this.v = w;
 		this.cn = v;
 		this.length = l;
+		this.shortcut = true;
 	}
 	
 	//Edge constructor u --> v && l(u,v) = l
@@ -111,6 +102,7 @@ class DpsEdge {
 		this.v = v;
 		this.cn = null;
 		this.length = l;
+		this.shortcut = false;
 	}
 
 
