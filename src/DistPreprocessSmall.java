@@ -1187,12 +1187,12 @@ class DistPreprocessSmall {
     				
     				
     				//TODO: rewrite this section to run queries and compare results to test files
-    				/*
+    				
     				s = br.readLine();
     				
     				int tests = Integer.valueOf(s);
     				
-    				System.out.println("Running tests: " + tests);
+    				System.out.println("Running tests: " + tests + " =========================================================");
     				
     				String[] expected = new String[tests];
     				
@@ -1205,8 +1205,8 @@ class DistPreprocessSmall {
     					e.printStackTrace();
     				}
     				
-    				//TODO: rewrite this section to use the biDijkstraCh() method instead of the biStar
-    				int biAStarSum = 0;
+    				//TODO: rewrite this section to use a Dijkstra search as a reference test
+    				int chSum = 0;
     				int dijkstraSum = 0;
     				
     				
@@ -1217,24 +1217,25 @@ class DistPreprocessSmall {
     					int start = Integer.valueOf(params[0]);
     					int target = Integer.valueOf(params[1]);
     					
-    					long bistarDist = g.biAStar(start, target);
-    					int bistarNodes = g.processed;
-    					biAStarSum += bistarNodes;
-    					long dijkstraDist = g.dijkstra(start, target);
-    					int dijkstraNodes = g.processed;
-    					dijkstraSum += dijkstraNodes;
+    					long chDist = g.chDijkstra(g.map.get(start), g.map.get(target));
+//    					int chNodes = g.processed;
+//    					chSum += chNodes;
+//    					long dijkstraDist = g.dijkstra(start, target);
+//    					int dijkstraNodes = g.processed;
+//    					dijkstraSum += dijkstraNodes;
     					long expectedDist = Long.valueOf(expected[k]);
     					
-    					System.out.println("Test: " + k + " biAStar: " + bistarDist + " nodes: "+ bistarNodes + " Dijkstra: " + dijkstraDist + " nodes: "+ dijkstraNodes +" Expected: " + expectedDist );
-    					if(bistarDist != expectedDist)
+//    					System.out.println("Test: " + k + " biAStar: " + chDist + " nodes: "+ chNodes + " Dijkstra: " + dijkstraDist + " nodes: "+ dijkstraNodes +" Expected: " + expectedDist );
+    					System.out.println("Test: " + k + " chDijkstra: " + chDist + " Expected: " + expectedDist );
+    					if(chDist != expectedDist)
     						System.out.println("NOT EXPECTED!!");
-    					if(bistarDist != dijkstraDist)
-    						System.out.println("NOT VERIFIED!!");
+//    					if(chDist != dijkstraDist)
+//    						System.out.println("NOT VERIFIED!!");
     					
     				}
     				
-    				System.out.println("BiAStar Sum: " + biAStarSum + " Dijkstra Sum: " + dijkstraSum);
-    				*/
+//    				System.out.println("BiAStar Sum: " + chSum + " Dijkstra Sum: " + dijkstraSum);
+    				
     				
     				
     			} catch (IOException e) {
