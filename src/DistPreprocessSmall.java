@@ -528,7 +528,7 @@ class BiGraph {
 
 	}
 	
-	public int shortcut(DpsNode v, boolean contract, int hops) {
+	public int shortcut(DpsNode v, boolean contract, boolean remove, int hops) {
 		
 		//if create, create shortcuts else return the edge difference shortcuts - ins - outs
 		
@@ -558,7 +558,7 @@ class BiGraph {
 
 		
 		for(DpsEdge e : inEdges) {			//get source nodes ignore contracted nodes
-			if(!contract)
+			if(!remove)
 				us.add(e.v);
 			else {
 				if(!e.v.contracted)
@@ -568,7 +568,7 @@ class BiGraph {
 		}
 		
 		for(DpsEdge e : outEdges) {		//get target nodes
-			if(!contract)
+			if(!remove)
 				ws.add(e.v);
 			else {
 				if(!e.v.contracted)
@@ -738,7 +738,7 @@ class BiGraph {
 			System.out.println();
 			System.out.println("PreProc Adding Node: " + i);
 			DpsNode nd = map.get(i);
-			shortcut(nd, false, maxHop);
+			shortcut(nd, false, false, maxHop);				//no contraction and no removal of contracted nodes
 			nd.setPriority();
 			preProc.enQueue(nd);
 			nd.queuedP = true;
@@ -760,7 +760,7 @@ class BiGraph {
 			DpsNode n = preProc.getMin();
 			System.out.println();
 			System.out.println("Pop: " + n.index + " priority: " + n.priority);
-			shortcut(n, false, maxHop);
+			shortcut(n, false, true, maxHop);												//remove the contracted nodes from the reprioritization
 			n.setPriority();
 			System.out.println("Reprioritized: " + n.index + " priority: " + n.priority);
 			if(!preProc.isEmpty()) {
@@ -774,7 +774,7 @@ class BiGraph {
 				preProc.enQueue(n);
 				continue;
 			} else {
-				shortcut(n, true, maxHop);
+				shortcut(n, true, true, maxHop);
 				n.setPriority();
 				n.processedP = true;
 				System.out.println("contracted: " + n.index + " priority: " + n.priority);
