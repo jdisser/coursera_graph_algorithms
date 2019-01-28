@@ -329,7 +329,7 @@ class BiGraph {
 			return 0;									//I found myself!!
 		}
 		
-		while(!heap.isEmpty() && !heapR.isEmpty()) {
+		while(!heap.isEmpty() || !heapR.isEmpty()) {
 	
 			if(!heap.isEmpty()) {						//process the next node in the forward graph
 				
@@ -337,11 +337,13 @@ class BiGraph {
 				processing.queued = false;
 				
 				
-//				System.out.println("processing Node: " + processing.index);
+				System.out.println("chDJKfwd processing Node: " + processing.index + "|" + processing.rank);
 				
 				for(DpsEdge e : graph.get(processing.index)) {
 					
 					DpsNode tt = e.v;					//TODO: How should a target node be handled here?
+					
+					System.out.println("fwd checking node: " + tt.index + "|" + tt.rank);
 					
 					if(tt.rank < upRank)				//only process nodes with a higher rank
 						continue;
@@ -351,8 +353,10 @@ class BiGraph {
 					
 					long td = processing.dist + e.length;
 				
+					System.out.println("fwd dist: " + td);
+					
 					if(tt.dist > td) {
-							
+						System.out.println("relaxing and enqueing : " + tt.index + "|" + tt.rank);
 							if(tt.queued == false) {	
 								tt.dist = td;
 								heap.enQueue(tt);
@@ -374,9 +378,11 @@ class BiGraph {
 					
 					long tp = processing.dist + processing.distR;
 					++dblProcessed;
+					System.out.println("At Node: "+ processing.index +" Found path len: " + tp);
 					if( tp < mu) {
 						mu = tp; 
 						result = mu;
+						System.out.println("Set min mu: " + mu);
 					}
 					
 					if(tp > mu) {							//if the processed combined distances are > than the min break the main while loop
@@ -392,11 +398,14 @@ class BiGraph {
 				DpsNode processingR = heapR.getMin();
 				processingR.queuedR = false;
 				
-//				System.out.println("processing Node: " + rr.index);
+
+				System.out.println("chDJKrev processing Node: " + processingR.index + "|" + processingR.rank);
 				
 				for(DpsEdge er : graphR.get(processingR.index)) {
 			
 					DpsNode ttr = er.v;					//TODO: How should a target node be handled here?
+					
+					System.out.println("fwd checking node: " + ttr.index + "|" + ttr.rank);
 					
 					if(ttr.rank < dnRank)				//only process edges leading to higher ranked nodes (note selects decreasing rank in the reverse graph)
 						continue;
@@ -405,10 +414,12 @@ class BiGraph {
 					}
 
 					long tdr = processingR.distR + er.length;
+					
+					System.out.println("fwd dist: " + tdr);
 				
 					if(ttr.distR > tdr) {
 
-							
+						System.out.println("relaxing and enqueing : " + ttr.index + "|" + ttr.rank) ;
 							if(ttr.queuedR == false) {
 								ttr.distR = tdr;
 								heapR.enQueue(ttr);
@@ -428,9 +439,11 @@ class BiGraph {
 					
 					long tp = processingR.dist + processingR.distR;
 					++dblProcessed;
+					System.out.println("At Node: "+ processingR.index +" Found path len: " + tp);
 					if( tp < mu) {
 						mu = tp; 
 						result = mu;
+						System.out.println("Set min mu: " + mu);
 					}
 					
 					if(tp > mu) {							//if the processed combined distances are > than the min break the main while loop
