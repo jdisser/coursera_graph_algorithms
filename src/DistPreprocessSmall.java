@@ -287,90 +287,79 @@ class BiGraph {
 		
 	}
 
-	//TODO: need a combined working set!!
-	/*
-    private long shortestPath() {
-    	long d = INFINITY;
-    	long dn = 0;
-    	for(Node n: working) {
-    		dn = n.dist + n.distR;
-    		d = Math.min(d, dn);
-    	}
-    	return d;					
-    }
-	*/
 	
-    //TODO  This method is to be rewritten as a bidirectional dijkstra with rank
-    /*
-     *
-	public long biAStar(int s, int t) {	//s & t are 0 indexed integers from the graph data
+   
+	public long chDijkstra(DpsNode sn, DpsNode tn) {	//s & t are 0 indexed integers from the graph data
 		
-		//implements  bidirectional A* algorithm
+		//implements modified bidirectional Dijkstra algorithm for contraction hierarchies
 //		long start = System.nanoTime();	
-		processed = 0;
-		int dblProcessed = 0;
 		
-		double prt;
+		int dblProcessed = 0;
+		int upRank = 0;
+		int dnRank = 0;
+		
+		
 		long mu = INFINITY;
 		
-		initializeQueues();
-		resetWorkingNodes(true);
+		heap.initializeQueue();
+		heap.resetWorkingNodes();
+		heapR.initializeQueue();
+		heapR.resetWorkingNodes();
 
-		
-		Node sn = map.get(s);
-		Node tn = map.get(t);
-		
 		sn.dist = 0;
-		sn.setK();
 		sn.parent = sn;
+		upRank = sn.rank;
 		
 		tn.distR = 0;
-		tn.setKr();
 		tn.parentR = tn;
+		dnRank = tn.rank;
 		
-		prt = tn.keyR;									//reverse potential of target since tn.distr = 0;
 		
-		enQueue(sn, heap);
+		
+		heap.enQueue(sn);
 		sn.queued = true;
-		enQueue(tn, heapR);
+		heapR.enQueue(tn);
 		tn.queuedR = true;	
-		working.add(sn);								//add the initial nodes to the working set
-		working.add(tn);
+		
 		
 		long result = -1;								//if after processing all nodes in the graph this is unchanged the target is unreachable
 		
 		
-		if(s == t) {
+		if(sn == tn) {
 			return 0;									//I found myself!!
 		}
 		
-		while(!heap.isEmpty() || !heapR.isEmpty()) {
+		while(!heap.isEmpty() && !heapR.isEmpty()) {
 	
 			if(!heap.isEmpty()) {						//process the next node in the forward graph
 				
-				Node processing = getMin(heap);
+				DpsNode processing = heap.getMin();
 				processing.queued = false;
 				
 				
 //				System.out.println("processing Node: " + processing.index);
 				
-				for(Edge e : graph.get(processing.index)) {
+				for(DpsEdge e : graph.get(processing.index)) {
 					
-					Node tt = e.v;	
+					DpsNode tt = e.v;					//TODO: How should a target node be handled here?
+					
+					if(tt.rank < upRank)				//only process nodes with a higher rank
+						continue;
+					else {
+						upRank = tt.rank;
+					}
 					
 					long td = processing.dist + e.length;
 				
 					if(tt.dist > td) {
 							
-							working.add(tt);
-							
 							if(tt.queued == false) {	
 								tt.dist = td;
-								tt.setK();
-								enQueue(tt, heap);
+								heap.enQueue(tt);
 								tt.queued = true;
 							} else {
-								decreaseKey(tt, td, heap);
+								tt.dist = td;
+								heap.decreaseKey(tt);
 							}
 
 						tt.parent = processing;				//min path is my daddy
@@ -379,26 +368,20 @@ class BiGraph {
 				}
 				
 				processing.processed = true;
-				++processed;
+				
 				
 				if(processing.processedR == true) {	
 					
-//					long tp = processing.dist + processing.distR;
-//					++dblProcessed;
-//					if( tp < mu) {
-//						mu = tp; 
-//						result = mu;
-//						cNode = processing.index;
-//					}
-//					if(!heap.isEmpty()) {
-//						if(heap.get(0).k > mu && heapR.get(0).kr > mu) {
-//							System.out.println("Exiting on break");
-//							break;
-//						}
-//					}
+					long tp = processing.dist + processing.distR;
+					++dblProcessed;
+					if( tp < mu) {
+						mu = tp; 
+						result = mu;
+					}
 					
-					result = shortestPath();
-					break;
+					if(tp > mu) {							//if the processed combined distances are > than the min break the main while loop
+						break;
+					}
 										
 				}
 					
@@ -406,27 +389,33 @@ class BiGraph {
 			
 			if(!heapR.isEmpty()) {						//process the next node in the reverse graph
 				
-				Node processingR = getMin(heapR);
+				DpsNode processingR = heapR.getMin();
 				processingR.queuedR = false;
 				
 //				System.out.println("processing Node: " + rr.index);
 				
-				for(Edge er : graphR.get(processingR.index)) {
+				for(DpsEdge er : graphR.get(processingR.index)) {
 			
-					Node ttr = er.v;		
+					DpsNode ttr = er.v;					//TODO: How should a target node be handled here?
 					
+					if(ttr.rank < dnRank)				//only process edges leading to higher ranked nodes (note selects decreasing rank in the reverse graph)
+						continue;
+					else {
+						dnRank = ttr.rank;
+					}
+
 					long tdr = processingR.distR + er.length;
 				
 					if(ttr.distR > tdr) {
 
-							working.add(ttr);
+							
 							if(ttr.queuedR == false) {
 								ttr.distR = tdr;
-								ttr.setKr();
-								enQueue(ttr, heapR);
+								heapR.enQueue(ttr);
 								ttr.queuedR = true;
 							} else {
-								decreaseKey(ttr, tdr, heapR);
+								ttr.distR = tdr;
+								heapR.decreaseKey(ttr);
 							}
 					
 						ttr.parentR = processingR;
@@ -434,23 +423,20 @@ class BiGraph {
 					
 				}
 				processingR.processedR = true;
-				++processed;
+				
 				if(processingR.processed == true) {
 					
-//					long tp = processingR.dist + processingR.distR;
-//					++dblProcessed;
-//					if( tp < mu) {
-//						mu = tp;
-//						result = mu;
-//					}
-//					if(!heapR.isEmpty()) {
-//						if(heap.get(0).k > mu && heapR.get(0).kr > mu) {
-//							break;
-//						}
-//					}
+					long tp = processingR.dist + processingR.distR;
+					++dblProcessed;
+					if( tp < mu) {
+						mu = tp; 
+						result = mu;
+					}
 					
-					result = shortestPath();
-					break;
+					if(tp > mu) {							//if the processed combined distances are > than the min break the main while loop
+						break;
+					}
+
 				}
 			}
 			
@@ -460,10 +446,10 @@ class BiGraph {
 //		System.out.println("BiAStar double processed nodes: " + dblProcessed);
 		return result;
     }
-	*/
+	
     
     
-	public long dijkstra(int s, int t) {
+	public long dijkstra(int s, int t) {		//TODO: rewrite this so that only original edges are used as a checking method
 		
 		long mu = INFINITY;
 
