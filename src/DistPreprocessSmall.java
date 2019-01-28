@@ -733,20 +733,18 @@ class BiGraph {
 	}
 	
 	public void buildPriorityQueue() {
-		
-//		int priority = 0;
-		
-		for(int i = 1; i < n; ++i) {
-//			System.out.println();
-//			System.out.println("Processing Node: " + i);
-			DpsNode n = map.get(i);
-			shortcut(n, false, maxHop);
-			n.setPriority();
-//			System.out.println(" Priority: " + n.priority);
-			preProc.enQueue(n);
-			n.queuedP = true;
-//			preProc.printHeap();
+
+		for(int i = 1; i <= n; ++i) {
+			System.out.println();
+			System.out.println("PreProc Adding Node: " + i);
+			DpsNode nd = map.get(i);
+			shortcut(nd, false, maxHop);
+			nd.setPriority();
+			preProc.enQueue(nd);
+			nd.queuedP = true;
+
 		}
+		preProc.printHeap();
 	}
 	
 	public void contractGraph() {
@@ -1226,7 +1224,7 @@ class DistPreprocessSmall {
     					long expectedDist = Long.valueOf(expected[k]);
     					
 //    					System.out.println("Test: " + k + " biAStar: " + chDist + " nodes: "+ chNodes + " Dijkstra: " + dijkstraDist + " nodes: "+ dijkstraNodes +" Expected: " + expectedDist );
-    					System.out.println("Test: " + k + " chDijkstra: " + chDist + " Expected: " + expectedDist );
+    					System.out.println("Test: " + k + " " + start + "-" + target + " chDijkstra: " + chDist + " Expected: " + expectedDist );
     					if(chDist != expectedDist)
     						System.out.println("NOT EXPECTED!!");
 //    					if(chDist != dijkstraDist)
