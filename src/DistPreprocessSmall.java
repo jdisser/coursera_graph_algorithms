@@ -256,7 +256,7 @@ class BiGraph {
 			System.out.print(" [");
 			for(DpsEdge e: graph.get(i)) {
 				if(e.shortcut)
-					System.out.print(e.v.index + ",");
+					System.out.print(e.v.index + "|" + e.length + ",");
 			}
 			System.out.print("]");
 			System.out.println();
@@ -334,6 +334,9 @@ class BiGraph {
 			if(!heap.isEmpty()) {						//process the next node in the forward graph
 				
 				DpsNode processing = heap.getMin();
+				
+				upRank = processing.rank;
+				
 				processing.queued = false;
 				
 				
@@ -347,9 +350,7 @@ class BiGraph {
 					
 					if(tt.rank < upRank)				//only process nodes with a higher rank
 						continue;
-					else {
-						upRank = tt.rank;
-					}
+					
 					
 					long td = processing.dist + e.length;
 				
@@ -398,6 +399,7 @@ class BiGraph {
 				DpsNode processingR = heapR.getMin();
 				processingR.queuedR = false;
 				
+				dnRank = processingR.rank;
 
 				System.out.println("chDJKrev processing Node: " + processingR.index + "|" + processingR.rank);
 				
@@ -409,9 +411,7 @@ class BiGraph {
 					
 					if(ttr.rank < dnRank)				//only process edges leading to higher ranked nodes (note selects decreasing rank in the reverse graph)
 						continue;
-					else {
-						dnRank = ttr.rank;
-					}
+					
 
 					long tdr = processingR.distR + er.length;
 					
