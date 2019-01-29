@@ -346,13 +346,13 @@ class BiGraph {
 				processing.queued = false;
 				
 				
-				System.out.println("chDJKfwd processing Node: " + processing.index + "|" + processing.rank);
+//				System.out.println("chDJKfwd processing Node: " + processing.index + "|" + processing.rank);
 				
 				for(DpsEdge e : graph.get(processing.index)) {
 					
 					DpsNode tt = e.v;					
 					
-					System.out.println("fwd checking node: " + tt.index + "|" + tt.rank);
+//					System.out.println("fwd checking node: " + tt.index + "|" + tt.rank);
 					
 					if(tt.rank < upRank)				//only process nodes with a higher rank
 						continue;
@@ -360,10 +360,10 @@ class BiGraph {
 					
 					long td = processing.dist + e.length;
 				
-					System.out.println("fwd dist: " + td);
+//					System.out.println("fwd dist: " + td);
 					
 					if(tt.dist > td) {
-						System.out.println("relaxing and enqueing : " + tt.index + "|" + tt.rank);
+//						System.out.println("relaxing and enqueing : " + tt.index + "|" + tt.rank);
 							if(tt.queued == false) {	
 								tt.dist = td;
 								heap.enQueue(tt);
@@ -385,11 +385,11 @@ class BiGraph {
 					
 					long tp = processing.dist + processing.distR;
 					++dblProcessed;
-					System.out.println("At Node: "+ processing.index +" Found path len: " + tp);
+//					System.out.println("At Node: "+ processing.index +" Found path len: " + tp);
 					if( tp < mu) {
 						mu = tp; 
 						result = mu;
-						System.out.println("Set min mu: " + mu);
+//						System.out.println("Set min mu: " + mu);
 					}
 					
 					if(tp > mu) {							//if the processed combined distances are > than the min break the main while loop
@@ -409,13 +409,13 @@ class BiGraph {
 				
 				dnRank = processingR.rank;
 
-				System.out.println("chDJKrev processing Node: " + processingR.index + "|" + processingR.rank);
+//				System.out.println("chDJKrev processing Node: " + processingR.index + "|" + processingR.rank);
 				
 				for(DpsEdge er : graphR.get(processingR.index)) {
 			
 					DpsNode ttr = er.v;					
 					
-					System.out.println("fwd checking node: " + ttr.index + "|" + ttr.rank);
+//					System.out.println("fwd checking node: " + ttr.index + "|" + ttr.rank);
 					
 					if(ttr.rank < dnRank)				//only process edges leading to higher ranked nodes (note selects decreasing rank in the reverse graph)
 						continue;
@@ -423,11 +423,11 @@ class BiGraph {
 
 					long tdr = processingR.distR + er.length;
 					
-					System.out.println("fwd dist: " + tdr);
+//					System.out.println("fwd dist: " + tdr);
 				
 					if(ttr.distR > tdr) {
 
-						System.out.println("relaxing and enqueing : " + ttr.index + "|" + ttr.rank) ;
+//						System.out.println("relaxing and enqueing : " + ttr.index + "|" + ttr.rank) ;
 							if(ttr.queuedR == false) {
 								ttr.distR = tdr;
 								heapR.enQueue(ttr);
@@ -447,11 +447,11 @@ class BiGraph {
 					
 					long tp = processingR.dist + processingR.distR;
 					++dblProcessed;
-					System.out.println("At Node: "+ processingR.index +" Found path len: " + tp);
+//					System.out.println("At Node: "+ processingR.index +" Found path len: " + tp);
 					if( tp < mu) {
 						mu = tp; 
 						result = mu;
-						System.out.println("Set min mu: " + mu);
+//						System.out.println("Set min mu: " + mu);
 					}
 					
 					if(tp > mu) {							//if the processed combined distances are > than the min break the main while loop
@@ -464,7 +464,7 @@ class BiGraph {
 		}
 //		long finish = System.nanoTime();
 //		long elapsed = (finish - start) / 1000000;
-//		System.out.println("BiAStar double processed nodes: " + dblProcessed);
+
 		return result;
     }
 	
@@ -551,7 +551,7 @@ class BiGraph {
 		
 		//if create, create shortcuts else return the edge difference shortcuts - ins - outs
 		
-		System.out.println("Shortcut v: " + v.index + " contract: " + contract);
+//		System.out.println("Shortcut v: " + v.index + " contract: " + contract);
 		
 		int shortcuts = 0;
 		
@@ -596,7 +596,7 @@ class BiGraph {
 			
 		}	
 		
-		System.out.println("us: " + us.size() + " ws: " + ws.size());
+//		System.out.println("us: " + us.size() + " ws: " + ws.size());
 		
 		v.active = false;				//remove v from the active graph
 		
@@ -615,20 +615,20 @@ class BiGraph {
 				}
 			}
 			
-			System.out.println("Processing u: " + u.index + " u-v dist: " + uvDist); 
+//			System.out.println("Processing u: " + u.index + " u-v dist: " + uvDist); 
 			
 			long maxShortcut = 0;
 			
-			System.out.println("Target nodes: ");
+//			System.out.println("Target nodes: ");
 			
 			for(DpsEdge e : outEdges) {					//for each target set the maximum shortcut distances d(u,v) + d(v,w) from this source
 				e.v.shortcutDist = uvDist + e.length;
 				maxShortcut = Math.max(maxShortcut, e.v.shortcutDist);
 				e.v.dist = INFINITY;
-				System.out.print(" " + e.v.index + "|" + e.v.shortcutDist );
+//				System.out.print(" " + e.v.index + "|" + e.v.shortcutDist );
 			}
 
-			System.out.println();
+//			System.out.println();
 			
 			u.dist = 0;
 			u.hops = 0;
@@ -636,7 +636,7 @@ class BiGraph {
 			
 			long dijkstraStop = maxShortcut;
 			
-			System.out.println("Dijkstra Stopping Distance: " + dijkstraStop);
+//			System.out.println("Dijkstra Stopping Distance: " + dijkstraStop);
 
 			heap.enQueue(u);
 			u.queued = true;
@@ -647,10 +647,10 @@ class BiGraph {
 				x.queued = false;
 				mu = Math.max(mu, x.dist);
 				
-				System.out.println("popped node: " + x.index + " dist: " + x.dist + " mu: " + mu);
+//				System.out.println("popped node: " + x.index + " dist: " + x.dist + " mu: " + mu);
 				
 				if(mu >= dijkstraStop || x.hops > hops) {	//stopping conditions are max d(u,w) > max (d(u,v)+d(v,w)){if used: - min(x,w)} || hops > hops parameter
-					System.out.println("Stopping Dijkstra mu: " + mu + " hops: " + x.hops);
+//					System.out.println("Stopping Dijkstra mu: " + mu + " hops: " + x.hops);
 					break;
 				}
 					
@@ -692,7 +692,7 @@ class BiGraph {
 			//Count and optionally generate shortcuts
 			for(DpsNode w : ws) {
 				
-				System.out.println("Node: " + w.index + " u-w dist: " + w.dist + " shortcut dist: " + w.shortcutDist);
+//				System.out.println("Node: " + w.index + " u-w dist: " + w.dist + " shortcut dist: " + w.shortcutDist);
 				
 				if(w.dist > w.shortcutDist) {
 
@@ -701,7 +701,7 @@ class BiGraph {
 					
 					
 					if(contract) {
-						System.out.println("Adding shortcut...");
+//						System.out.println("Adding shortcut...");
 						DpsEdge sc = new DpsEdge(u , v , w , w.shortcutDist);
 						sCuts.add(sc);											//don't include the shortcuts in the witness searches!!!
 						DpsEdge scr = new DpsEdge(w, v, u, w.shortcutDist);
@@ -721,8 +721,8 @@ class BiGraph {
 		v.cover = cover.size();
 		
 		
-		System.out.println("v Node: " + v.index + " edge diff: " + v.edgeDiff + " cover: "+ v.cover + " v shortcuts: " + v.shortcuts);
-		System.out.println("Shortcut Edges: " + scEdges);
+//		System.out.println("v Node: " + v.index + " edge diff: " + v.edgeDiff + " cover: "+ v.cover + " v shortcuts: " + v.shortcuts);
+//		System.out.println("Shortcut Edges: " + scEdges);
 		
 		if(contract) {
 			v.contracted = true;
@@ -754,8 +754,8 @@ class BiGraph {
 	public void buildPriorityQueue() {
 
 		for(int i = 1; i <= n; ++i) {
-			System.out.println();
-			System.out.println("PreProc Adding Node: " + i);
+//			System.out.println();
+//			System.out.println("PreProc Adding Node: " + i);
 			DpsNode nd = map.get(i);
 			shortcut(nd, false, false, maxHop);				//no contraction and no removal of contracted nodes
 			nd.setPriority();
@@ -763,7 +763,7 @@ class BiGraph {
 			nd.queuedP = true;
 
 		}
-		preProc.printHeap();
+//		preProc.printHeap();
 	}
 	
 	public void contractGraph() {
@@ -777,29 +777,29 @@ class BiGraph {
 		while(!preProc.isEmpty()) {
 			
 			DpsNode n = preProc.getMin();
-			System.out.println();
-			System.out.println("Pop: " + n.index + " priority: " + n.priority);
+//			System.out.println();
+//			System.out.println("Pop: " + n.index + " priority: " + n.priority);
 			shortcut(n, false, true, maxHop);												//remove the contracted nodes from the reprioritization
 			n.setPriority();
-			System.out.println("Reprioritized: " + n.index + " priority: " + n.priority);
+//			System.out.println("Reprioritized: " + n.index + " priority: " + n.priority);
 			if(!preProc.isEmpty()) {
 				min = preProc.peek();
-				System.out.println("preProc min: " + min.index + " priority: " + min.priority);
+//				System.out.println("preProc min: " + min.index + " priority: " + min.priority);
 			}
-			System.out.println();
+//			System.out.println();
 			if(!preProc.isEmpty() && n != minPriority(n, min)) {
-				System.out.println("enQueue: " + n.index + " priority: " + n.priority);
-				System.out.println();
+//				System.out.println("enQueue: " + n.index + " priority: " + n.priority);
+//				System.out.println();
 				preProc.enQueue(n);
 				continue;
 			} else {
 				shortcut(n, true, true, maxHop);
 				n.setPriority();
 				n.processedP = true;
-				System.out.println("contracted: " + n.index + " priority: " + n.priority);
-				System.out.println("-----------------------------------------------------");
+//				System.out.println("contracted: " + n.index + " priority: " + n.priority);
+//				System.out.println("-----------------------------------------------------");
 			}
-			preProc.printHeap();
+//			preProc.printHeap();
 			++loops;
 			if(loops > 100) {
 				System.out.println("Terminating with infinite loop...");
@@ -1189,22 +1189,26 @@ class DistPreprocessSmall {
     				HashSet<Integer> test = new HashSet<Integer>();
     				
     				System.out.println("Running Hash Table collision test...");
-    				for(int i = 1; i < 3000; ++i) {
+    				int collisions = 0;
+    				int colTests = 3000;
+    				for(int i = 1; i < colTests; ++i) {
     					int x = tHash.hash(i);
     					if(test.contains(x))
-    						System.out.println("Collision: " + i + " Hash: " + x);
+    						++collisions;
     					test.add(x);
     				}
     				
-    				System.out.println();
-    				g.printGraph(true);
-    				System.out.println();
+					System.out.println("Collisions: " + collisions + "|" + colTests);
+    				
+//    				System.out.println();
+//    				g.printGraph(true);
+//    				System.out.println();
     				
     				System.out.println("Building Priority Queue: ");
     				g.buildPriorityQueue();
     				System.out.println("Contracting: =========================================================");
     				g.contractGraph();
-    				g.printOverlayGraph();
+//    				g.printOverlayGraph();
     				System.out.println("Ready");
     				
     				
@@ -1229,7 +1233,7 @@ class DistPreprocessSmall {
     				}
     				
     				
-    				
+    				int fCount = 0;
     				
     				for(int k = 0; k < tests; ++k) {
     					s = br.readLine();
@@ -1244,15 +1248,20 @@ class DistPreprocessSmall {
     					long expectedDist = Long.valueOf(expected[k]);
     					
 
-    					System.out.println("Test: " + k + " " + start + "-" + target + " chDijkstra: " + chDist + " Expected: " + expectedDist + " Processed: " + g.chNodes);
-    					System.out.println("Test: " + k + " " + start + "-" + target + " Dijkstra: " + dijkstraDist + " Expected: " + expectedDist + " Processed: " + g.dijkNodes);
-    					if(chDist != expectedDist)
-    						System.out.println("NOT EXPECTED!!");
-    					if(chDist != dijkstraDist)
-    						System.out.println("NOT VERIFIED!!");
+//    					System.out.println("Test: " + k + " " + start + "-" + target + " chDijkstra: " + chDist + " Expected: " + expectedDist + " Processed: " + g.chNodes);
+//    					System.out.println("Test: " + k + " " + start + "-" + target + " Dijkstra: " + dijkstraDist + " Expected: " + expectedDist + " Processed: " + g.dijkNodes);
+    					if(chDist != expectedDist) {
+    						System.out.println("NOT EXPECTED!!" + "Test: " + k + " " + start + "-" + target + " Dijkstra: " + dijkstraDist + " chDijkstra: " + chDist + " Expected: " + expectedDist + " chProcessed: " + g.chNodes + " dijkProcessed: " + g.dijkNodes);
+    						++fCount;
+    					}
+    					
+    						
+//    					if(chDist != dijkstraDist)
+//    						System.out.println("NOT VERIFIED!!");
     					
     				}
     				
+    				System.out.println("Failed: " + fCount + " of tests: " + tests);
 
     				
     				
