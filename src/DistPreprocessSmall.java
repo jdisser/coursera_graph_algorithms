@@ -1001,8 +1001,9 @@ class PriorityNodeQ {
     		if(rght <= li)
     			rhi = hTable.hash(heap.get(rght).index);
     		minhi = hTable.hash(heap.get(mini).index);
+ 
+    		//TODO: determine if a collision here would cause a false output
     		
-    		//TODO: there is a small probability that the hash will not be unique ~ 4/3000 handle this case here
     		
     		if(left <= li && minNode.test(heap.get(left), heap.get(mini))) {
         		mini = left;
@@ -1054,7 +1055,12 @@ class PriorityNodeQ {
 				hi = hTable.hash(heap.get(i).index);					//use the hash of the index to break ties
 	    		hpi = hTable.hash(heap.get(pi).index);
 	    		
-	    		//TODO: there is a small probability that the hash will not be unique ~ 4/3000 handle this case here
+	    		if(hi == hpi) {											//handle hash collisions
+	    			hi = hTable.hash(heap.get(i).index);
+	    			hpi = hTable.hash(heap.get(pi).index);
+	    		}
+	    		
+	    	
 	    		
 	    		if(minNode.test(heap.get(i), heap.get(pi))) {
 //	    			System.out.println("swapping: " + pi + "-" + i);
