@@ -131,6 +131,9 @@ class BiGraph {
 	public int nRank;
 	public int maxHop;
 	
+	public int chNodes;
+	public int dijkNodes;
+	
 	TableHash hTable;
 
 	
@@ -298,6 +301,7 @@ class BiGraph {
 		int upRank = 0;
 		int dnRank = 0;
 		
+		chNodes = 0;
 		
 		long mu = INFINITY;
 		
@@ -335,6 +339,8 @@ class BiGraph {
 				
 				DpsNode processing = heap.getMin();
 				
+				++chNodes;
+				
 				upRank = processing.rank;
 				
 				processing.queued = false;
@@ -344,7 +350,7 @@ class BiGraph {
 				
 				for(DpsEdge e : graph.get(processing.index)) {
 					
-					DpsNode tt = e.v;					//TODO: How should a target node be handled here?
+					DpsNode tt = e.v;					
 					
 					System.out.println("fwd checking node: " + tt.index + "|" + tt.rank);
 					
@@ -399,13 +405,15 @@ class BiGraph {
 				DpsNode processingR = heapR.getMin();
 				processingR.queuedR = false;
 				
+				++chNodes;
+				
 				dnRank = processingR.rank;
 
 				System.out.println("chDJKrev processing Node: " + processingR.index + "|" + processingR.rank);
 				
 				for(DpsEdge er : graphR.get(processingR.index)) {
 			
-					DpsNode ttr = er.v;					//TODO: How should a target node be handled here?
+					DpsNode ttr = er.v;					
 					
 					System.out.println("fwd checking node: " + ttr.index + "|" + ttr.rank);
 					
@@ -462,39 +470,37 @@ class BiGraph {
 	
     
     
-	public long dijkstra(int s, int t) {		//TODO: rewrite this so that only original edges are used as a checking method
+	public long dijkstra(DpsNode sn, DpsNode tn) {		
 		
 		long mu = INFINITY;
-
+		
+		dijkNodes = 0;
 		
 		heap.initializeQueue();
 		heap.resetWorkingNodes();
 
-		
-		DpsNode sn = map.get(s);
-		DpsNode tn = map.get(t);
-		
 		sn.dist = 0;
-								
-	
+
 		heap.enQueue(sn);
 		sn.queued = true;
-		
-		
-		if(s == t) {
+	
+		if(sn == tn) {
 			return 0;									//I found myself!!
 		}
-		
-		
-	
+
 		while(!heap.isEmpty()) {						//process the next node in the forward graph
 			
 			DpsNode processing = heap.getMin();
 			processing.queued = false;
+			++dijkNodes;
 			
 //				System.out.println("processing Node: " + processing.index);
+			
 			if(processing != tn) {
 				for(DpsEdge e : graph.get(processing.index)) {
+					
+					if(e.shortcut)								//don't use shortcuts to check the chDijkstra method
+						continue;
 					
 					DpsNode tt = e.v;	
 					
@@ -511,7 +517,7 @@ class BiGraph {
 								heap.decreaseKey(tt);
 							}
 
-//							tt.pindex = processing.index;				//min path is my daddy
+							tt.parent = processing;				//min path is my daddy
 					}
 						
 				}
@@ -1197,7 +1203,7 @@ class DistPreprocessSmall {
     				
     				
     				
-    				//TODO: rewrite this section to run queries and compare results to test files
+    				
     				
     				s = br.readLine();
     				
@@ -1216,9 +1222,7 @@ class DistPreprocessSmall {
     					e.printStackTrace();
     				}
     				
-    				//TODO: rewrite this section to use a Dijkstra search as a reference test
-    				int chSum = 0;
-    				int dijkstraSum = 0;
+    				
     				
     				
     				for(int k = 0; k < tests; ++k) {
@@ -1229,23 +1233,21 @@ class DistPreprocessSmall {
     					int target = Integer.valueOf(params[1]);
     					
     					long chDist = g.chDijkstra(g.map.get(start), g.map.get(target));
-//    					int chNodes = g.processed;
-//    					chSum += chNodes;
-//    					long dijkstraDist = g.dijkstra(start, target);
-//    					int dijkstraNodes = g.processed;
-//    					dijkstraSum += dijkstraNodes;
+    					long dijkstraDist = g.dijkstra(g.map.get(start), g.map.get(target));
+
     					long expectedDist = Long.valueOf(expected[k]);
     					
-//    					System.out.println("Test: " + k + " biAStar: " + chDist + " nodes: "+ chNodes + " Dijkstra: " + dijkstraDist + " nodes: "+ dijkstraNodes +" Expected: " + expectedDist );
-    					System.out.println("Test: " + k + " " + start + "-" + target + " chDijkstra: " + chDist + " Expected: " + expectedDist );
+
+    					System.out.println("Test: " + k + " " + start + "-" + target + " chDijkstra: " + chDist + " Expected: " + expectedDist + " Processed: " + g.chNodes);
+    					System.out.println("Test: " + k + " " + start + "-" + target + " Dijkstra: " + dijkstraDist + " Expected: " + expectedDist + " Processed: " + g.dijkNodes);
     					if(chDist != expectedDist)
     						System.out.println("NOT EXPECTED!!");
-//    					if(chDist != dijkstraDist)
-//    						System.out.println("NOT VERIFIED!!");
+    					if(chDist != dijkstraDist)
+    						System.out.println("NOT VERIFIED!!");
     					
     				}
     				
-//    				System.out.println("BiAStar Sum: " + chSum + " Dijkstra Sum: " + dijkstraSum);
+
     				
     				
     				
