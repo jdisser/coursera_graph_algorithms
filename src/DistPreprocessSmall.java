@@ -300,7 +300,8 @@ class BiGraph {
 		//implements modified bidirectional Dijkstra algorithm for contraction hierarchies
 //		long start = System.nanoTime();	
 		
-		
+		boolean term = false;
+		boolean termR = false;
 		
 		int dblProcessed = 0;
 		int upRank = 0;
@@ -390,19 +391,20 @@ class BiGraph {
 					
 					long tp = processing.dist + processing.distR;
 					++dblProcessed;
-//					System.out.println("At Node: "+ processing.index +" Found path len: " + tp);
-					if( tp < mu) {
-						mu = tp; 
-						result = mu;
-//						System.out.println("Set min mu: " + mu);
-					}
+
+					mu = Math.min(mu, tp);
+					result = mu;
+					
+
 					
 					if(tp > mu) {							//if the processed combined distances are > than the min break the main while loop
+						term = true;
 						++longerBreaks;
-						mu = Math.min(mu, heap.getMinDistInQueue());
-						mu = Math.min(mu, heapR.getMinDistInQueue());
+						mu = Math.min(mu, heap.getMinDistInWorking());
+						mu = Math.min(mu, heapR.getMinDistInWorking());
 						result = mu;
-						break;
+						if(termR)
+							break;
 					}
 										
 				}
@@ -456,19 +458,21 @@ class BiGraph {
 					
 					long tp = processingR.dist + processingR.distR;
 					++dblProcessed;
-//					System.out.println("At Node: "+ processingR.index +" Found path len: " + tp);
-					if( tp < mu) {
-						mu = tp; 
-						result = mu;
-//						System.out.println("Set min mu: " + mu);
-					}
 					
+					mu = Math.min(mu, tp);
+					result = mu;
+					
+					
+
+					//TODO: both heaps need to reach this condition before the break
 					if(tp > mu) {							//if the processed combined distances are > than the min break the main while loop
+						termR = true;
 						++longerBreaks;
-						mu = Math.min(mu, heap.getMinDistInQueue());
-						mu = Math.min(mu, heapR.getMinDistInQueue());
+						mu = Math.min(mu, heap.getMinDistInWorking());
+						mu = Math.min(mu, heapR.getMinDistInWorking());
 						result = mu;
-						break;
+						if(term)
+							break;
 					}
 
 				}
@@ -1142,6 +1146,16 @@ class PriorityNodeQ {
 		long minD = INFINITY;
 		
 		for(DpsNode n : heap) {
+			minD = Math.min(minD, n.dist + n.distR);
+		}
+	
+		return minD;
+	}
+	
+	public long getMinDistInWorking() {
+		long minD = INFINITY;
+		
+		for(DpsNode n : working) {
 			minD = Math.min(minD, n.dist + n.distR);
 		}
 	
