@@ -134,6 +134,8 @@ class BiGraph {
 	public int chNodes;
 	public int dijkNodes;
 	
+	int longerBreaks;
+	
 	TableHash hTable;
 
 	
@@ -142,6 +144,7 @@ class BiGraph {
 		this.hTable = ht;			//inject a hash table object
 		this.nRank = 0;
 		this.maxHop = 5;			//adjust this for best performance
+		this.longerBreaks = 0;
 
         this.graph = new ArrayList<ArrayList<DpsEdge>>();
         this.graphR = new ArrayList<ArrayList<DpsEdge>>();
@@ -297,6 +300,8 @@ class BiGraph {
 		//implements modified bidirectional Dijkstra algorithm for contraction hierarchies
 //		long start = System.nanoTime();	
 		
+		
+		
 		int dblProcessed = 0;
 		int upRank = 0;
 		int dnRank = 0;
@@ -393,6 +398,10 @@ class BiGraph {
 					}
 					
 					if(tp > mu) {							//if the processed combined distances are > than the min break the main while loop
+						++longerBreaks;
+						mu = Math.min(mu, heap.getMinDistInQueue());
+						mu = Math.min(mu, heapR.getMinDistInQueue());
+						result = mu;
 						break;
 					}
 										
@@ -455,6 +464,10 @@ class BiGraph {
 					}
 					
 					if(tp > mu) {							//if the processed combined distances are > than the min break the main while loop
+						++longerBreaks;
+						mu = Math.min(mu, heap.getMinDistInQueue());
+						mu = Math.min(mu, heapR.getMinDistInQueue());
+						result = mu;
 						break;
 					}
 
@@ -468,7 +481,13 @@ class BiGraph {
 		return result;
     }
 	
-    
+    public long minDistInQueues() {
+    	long minD = INFINITY;
+    	
+    	
+    	
+    	return minD;
+    }
     
 	public long dijkstra(DpsNode sn, DpsNode tn) {		
 		
@@ -898,7 +917,7 @@ class PriorityNodeQ {
 	 * constructor a hash function is used to order nodes with equal keys.
 	 */
 	
-	
+	private static final long INFINITY = Long.MAX_VALUE/4;
 	private ArrayList<DpsNode> heap;
 	private TableHash hTable;
 	public HashSet<DpsNode> working;					//all nodes processed in this queue that must be reset
@@ -1119,6 +1138,16 @@ class PriorityNodeQ {
 		return heap.isEmpty();
 	}
 	
+	public long getMinDistInQueue() {
+		long minD = INFINITY;
+		
+		for(DpsNode n : heap) {
+			minD = Math.min(minD, n.dist + n.distR);
+		}
+	
+		return minD;
+	}
+	
 	
 	
 	
@@ -1262,7 +1291,7 @@ class DistPreprocessSmall {
     				}
     				
     				System.out.println("Failed: " + fCount + " of tests: " + tests);
-
+    				System.out.println("Longer Breaks: " + g.longerBreaks);
     				
     				
     				
