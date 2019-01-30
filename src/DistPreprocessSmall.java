@@ -310,6 +310,7 @@ class BiGraph {
 		chNodes = 0;
 		
 		long mu = INFINITY;
+		long muQ = INFINITY;
 		
 		heap.initializeQueue();
 		heap.resetWorkingNodes();
@@ -393,16 +394,14 @@ class BiGraph {
 					++dblProcessed;
 
 					mu = Math.min(mu, tp);
-					result = mu;
-					
 
+					if(processing == tn)
+						break;
 					
 					if(tp > mu) {							//if the processed combined distances are > than the min break the main while loop
 						term = true;
 						++longerBreaks;
-						mu = Math.min(mu, heap.getMinDistInWorking());
-						mu = Math.min(mu, heapR.getMinDistInWorking());
-						result = mu;
+						
 						if(termR)
 							break;
 					}
@@ -460,38 +459,32 @@ class BiGraph {
 					++dblProcessed;
 					
 					mu = Math.min(mu, tp);
-					result = mu;
 					
+					if(processingR == sn)
+						break;								//found in ascending path
 					
-
-					//TODO: both heaps need to reach this condition before the break
 					if(tp > mu) {							//if the processed combined distances are > than the min break the main while loop
 						termR = true;
 						++longerBreaks;
-						mu = Math.min(mu, heap.getMinDistInWorking());
-						mu = Math.min(mu, heapR.getMinDistInWorking());
-						result = mu;
+						
 						if(term)
 							break;
 					}
 
 				}
 			}
-			
+	
 		}
 //		long finish = System.nanoTime();
 //		long elapsed = (finish - start) / 1000000;
+		mu = Math.min(mu, heap.getMinDistInWorking());
+		mu = Math.min(mu, heapR.getMinDistInWorking());
+		result = mu;
 
 		return result;
     }
 	
-    public long minDistInQueues() {
-    	long minD = INFINITY;
-    	
-    	
-    	
-    	return minD;
-    }
+    
     
 	public long dijkstra(DpsNode sn, DpsNode tn) {		
 		
@@ -1277,6 +1270,8 @@ class DistPreprocessSmall {
     				
     				
     				int fCount = 0;
+    				int totalDk = 0;
+    				int totalCh = 0;
     				
     				for(int k = 0; k < tests; ++k) {
     					s = br.readLine();
@@ -1298,6 +1293,8 @@ class DistPreprocessSmall {
     						++fCount;
     					}
     					
+    					totalDk += g.dijkNodes;
+    					totalCh += g.chNodes;
     						
 //    					if(chDist != dijkstraDist)
 //    						System.out.println("NOT VERIFIED!!");
@@ -1306,6 +1303,7 @@ class DistPreprocessSmall {
     				
     				System.out.println("Failed: " + fCount + " of tests: " + tests);
     				System.out.println("Longer Breaks: " + g.longerBreaks);
+    				System.out.println("Total Dijkstra nodes: " + totalDk + " Total CH Nodes: " + totalCh);
     				
     				
     				
